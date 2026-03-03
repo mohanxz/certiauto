@@ -1,0 +1,324 @@
+@baseUrl = http://localhost:4000/api
+@authToken = {{login.response.body.token}}
+
+### ---------------------------------------------------
+### Authentication
+### ---------------------------------------------------
+# @name login
+POST {{baseUrl}}/user/login
+Content-Type: application/json
+
+{
+    "email": "superadmin@example.com",
+    "password": "secretpass"
+}
+
+### ---------------------------------------------------
+### Program Module
+### ---------------------------------------------------
+
+### Create Program
+POST {{baseUrl}}/program/create-program
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "programName": "PG Diploma in Data Science",
+    "description": "1 Year Full Time",
+    "year": 2026
+}
+
+### Get All Programs
+GET {{baseUrl}}/program/get-all-programs
+Authorization: Bearer {{authToken}}
+
+### Get Program By ID
+@programId = 650000000000000000000000
+GET {{baseUrl}}/program/{{programId}}
+Authorization: Bearer {{authToken}}
+
+### Update Program
+PUT {{baseUrl}}/program/{{programId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "programName": "PG Diploma in Data Science (Updated)",
+    "year": 2027
+}
+
+### Delete Program
+DELETE {{baseUrl}}/program/{{programId}}
+Authorization: Bearer {{authToken}}
+
+
+### ---------------------------------------------------
+### Course Module
+### ---------------------------------------------------
+
+### Create Course
+POST {{baseUrl}}/course/create-course
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "courseName": "Full Stack Development",
+    "courseCode": "FSD-101",
+    "description": "MERN Stack Course"
+}
+
+### Get All Courses
+GET {{baseUrl}}/course/get-all-courses
+Authorization: Bearer {{authToken}}
+
+### Get Course By ID
+@courseId = 650000000000000000000000
+GET {{baseUrl}}/course/get-course/{{courseId}}
+Authorization: Bearer {{authToken}}
+
+### Update Course
+PUT {{baseUrl}}/course/update-course/{{courseId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "courseName": "Full Stack Development (Updated)"
+}
+
+### Delete Course
+DELETE {{baseUrl}}/course/delete-course/{{courseId}}
+Authorization: Bearer {{authToken}}
+
+
+### ---------------------------------------------------
+### Batch Module
+### ---------------------------------------------------
+
+### Create Batch
+POST {{baseUrl}}/batch/create-batch
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "programId": "{{programId}}",
+    "batchName": "Morning Batch A",
+    "batchCode": "BATCH-001",
+    "description": "9 AM to 11 AM",
+    "startTime": "09:00",
+    "endTime": "11:00"
+}
+
+### Get All Batches
+GET {{baseUrl}}/batch/get-all-batches
+Authorization: Bearer {{authToken}}
+
+### Get Batch By ID
+@batchId = 650000000000000000000001
+GET {{baseUrl}}/batch/get-batch/{{batchId}}
+Authorization: Bearer {{authToken}}
+
+### Update Batch
+PUT {{baseUrl}}/batch/update-batch/{{batchId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "batchName": "Morning Batch A (Revised)",
+    "startTime": "09:30",
+    "endTime": "11:30"
+}
+
+### Delete Batch
+DELETE {{baseUrl}}/batch/delete-batch/{{batchId}}
+Authorization: Bearer {{authToken}}
+
+
+### ---------------------------------------------------
+### Student Module
+### ---------------------------------------------------
+
+### Create Student
+POST {{baseUrl}}/student/create-student
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "name": "John Doe",
+    "email": "john.doe@example.com",
+    "phoneNumber": "9876543210",
+    "address": "123 Main St",
+    "batchId": "{{batchId}}",
+    "enrolledCourseIds": ["{{courseId}}"],
+    "finalMark": "85",
+    "uniqueId": "STUD-001",
+    "completionDate": "2026-01-30"
+}
+
+### Get All Students (Paginated)
+GET {{baseUrl}}/student/get-all-students?page=1&limit=10
+Authorization: Bearer {{authToken}}
+
+### Get Student By ID
+@studentId = 650000000000000000000002
+GET {{baseUrl}}/student/get-student/{{studentId}}
+Authorization: Bearer {{authToken}}
+
+### Update Student
+PUT {{baseUrl}}/student/update-student/{{studentId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "name": "Johnathan Doe",
+    "finalMark": "90"
+}
+
+### Send Single Certificate (Data from DB)
+POST {{baseUrl}}/student/send-certificate/{{studentId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "subject": "Certificate of Completion",
+    "body": "Dear {name}, congrats on completing the {course} course in {program}."
+}
+
+### Delete Student
+DELETE {{baseUrl}}/student/delete-student/{{studentId}}
+Authorization: Bearer {{authToken}}
+
+
+### ---------------------------------------------------
+### Bulk Upload Module
+### ---------------------------------------------------
+
+### Download Template
+GET {{baseUrl}}/bulk-upload/download-template
+Authorization: Bearer {{authToken}}
+
+### Upload Excel File
+# Use Form-Data in actual client
+POST {{baseUrl}}/bulk-upload/upload
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="students.xlsx"
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+< ./students.xlsx
+--boundary--
+
+### Get Upload History
+GET {{baseUrl}}/bulk-upload/history
+Authorization: Bearer {{authToken}}
+
+### Get Upload Job Details
+@uploadJobId = 650000000000000000000003
+GET {{baseUrl}}/bulk-upload/history/{{uploadJobId}}
+Authorization: Bearer {{authToken}}
+
+
+### ---------------------------------------------------
+### Mail Template Module
+### ---------------------------------------------------
+
+### Create Template
+POST {{baseUrl}}/mailtemplate/create-template
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "name": "Welcome Template",
+    "subject": "Welcome to Cybernaut",
+    "body": "<p>Hello {name}, welcome to {program}!</p>"
+}
+
+### Get All Templates
+GET {{baseUrl}}/mailtemplate/get-all-templates
+Authorization: Bearer {{authToken}}
+
+### Get Template By ID
+@templateId = 650000000000000000000004
+GET {{baseUrl}}/mailtemplate/get-template/{{templateId}}
+Authorization: Bearer {{authToken}}
+
+### Update Template
+PUT {{baseUrl}}/mailtemplate/update-template/{{templateId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "subject": "Welcome to Cybernaut (Updated)"
+}
+
+### Delete Template
+DELETE {{baseUrl}}/mailtemplate/delete-template/{{templateId}}
+Authorization: Bearer {{authToken}}
+
+
+### ---------------------------------------------------
+### Certificate Template Module
+### ---------------------------------------------------
+
+### Upload Certificate Template (Word DOCX)
+POST {{baseUrl}}/certificate-template/upload
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="Certificate.docx"
+Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+< ./Certificate.docx
+--boundary--
+
+### Get All Certificate Templates
+GET {{baseUrl}}/certificate-template/get-all-templates
+Authorization: Bearer {{authToken}}
+
+### Delete Certificate Template
+@certTemplateId = 650000000000000000000006
+DELETE {{baseUrl}}/certificate-template/delete-template/{{certTemplateId}}
+Authorization: Bearer {{authToken}}
+
+
+### ---------------------------------------------------
+### Bulk Email Module
+### ---------------------------------------------------
+
+### Create Bulk Email/Certificate Job
+POST {{baseUrl}}/bulk-email/create
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "title": "Batch A Certificates",
+    "batchIds": ["{{batchId}}"], 
+    "type": "CERTIFICATE",
+    "subject": "Your Certificate",
+    "body": "Dear {name}, here is your certificate for {program}.",
+    "certificateTemplateId": "{{certTemplateId}}"
+}
+
+### Get Campaign History
+GET {{baseUrl}}/bulk-email/history
+Authorization: Bearer {{authToken}}
+
+### Get Campaign Details
+@campaignId = 650000000000000000000005
+GET {{baseUrl}}/bulk-email/{{campaignId}}
+Authorization: Bearer {{authToken}}
+
+### Retry Failed Campaign
+POST {{baseUrl}}/bulk-email/{{campaignId}}/retry
+Authorization: Bearer {{authToken}}
+
+
+### ---------------------------------------------------
+### Mail Logs Module
+### ---------------------------------------------------
+
+### Get Email Logs
+GET {{baseUrl}}/maillog/history?page=1&limit=20
+Authorization: Bearer {{authToken}}
