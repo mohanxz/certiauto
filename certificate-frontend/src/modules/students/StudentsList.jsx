@@ -1,23 +1,22 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { studentAPI } from '../../api/students';
-import bulkUploadAPI from '../../api/bulkUpload';
-import { batchAPI } from '../../api/batches';
-import { courseAPI } from '../../api/courses';
-import LoadingSkeleton from '../../components/common/LoadingSkeleton';
-import EmptyState from '../../components/common/EmptyState';
-import Button from '../../components/ui/Button';
-import StudentCard from './StudentCard';
-import StudentsTable from './StudentsTable';
-import StudentForm from './StudentForm';
-import BulkUploadModal from './BulkUploadModal';
-import StudentEmailModal from './StudentEmailModal';
-import Pagination from '../../components/common/Pagination';
-import { useToast } from '../../hooks/useToast';
+import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { studentAPI } from "../../api/students";
+import bulkUploadAPI from "../../api/bulkUpload";
+import { batchAPI } from "../../api/batches";
+import { courseAPI } from "../../api/courses";
+import LoadingSkeleton from "../../components/common/LoadingSkeleton";
+import EmptyState from "../../components/common/EmptyState";
+import Button from "../../components/ui/Button";
+import StudentCard from "./StudentCard";
+import StudentsTable from "./StudentsTable";
+import StudentForm from "./StudentForm";
+import BulkUploadModal from "./BulkUploadModal";
+import StudentEmailModal from "./StudentEmailModal";
+import { useToast } from "../../hooks/useToast";
 
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
-import autoTable from 'jspdf-autotable';
+import jsPDF from "jspdf";
+import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 const StudentsList = () => {
   const [students, setStudents] = useState([]);
@@ -29,28 +28,18 @@ const StudentsList = () => {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
   const [contactStudent, setContactStudent] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [batchFilter, setBatchFilter] = useState('all');
-  const [courseFilter, setCourseFilter] = useState('all');
-  const [viewMode, setViewMode] = useState('table');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [batchFilter, setBatchFilter] = useState("all");
+  const [courseFilter, setCourseFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("table");
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [uploadHistory, setUploadHistory] = useState([]);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  
+
   // Delete All Students State
   const [showDeleteAllConfirm, setShowDeleteAllConfirm] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
-
-  // Pagination State
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [pagination, setPagination] = useState({
-    total: 0,
-    totalPages: 1,
-    hasNext: false,
-    hasPrevious: false
-  });
 
   const { showToast } = useToast();
 
@@ -59,17 +48,17 @@ const StudentsList = () => {
   const tableRef = useRef(null);
 
   useEffect(() => {
-    const batchIdFromURL = searchParams.get('batchId');
-    const batchNameFromURL = searchParams.get('batchName');
-    const courseIdFromURL = searchParams.get('courseId');
-    const courseNameFromURL = searchParams.get('courseName');
+    const batchIdFromURL = searchParams.get("batchId");
+    const batchNameFromURL = searchParams.get("batchName");
+    const courseIdFromURL = searchParams.get("courseId");
+    const courseNameFromURL = searchParams.get("courseName");
 
     if (batchIdFromURL) {
       setBatchFilter(batchIdFromURL);
       if (batchNameFromURL) {
         setSelectedBatch({
           _id: batchIdFromURL,
-          batchName: decodeURIComponent(batchNameFromURL)
+          batchName: decodeURIComponent(batchNameFromURL),
         });
       }
     }
@@ -79,7 +68,7 @@ const StudentsList = () => {
       if (courseNameFromURL) {
         setSelectedCourse({
           _id: courseIdFromURL,
-          courseName: decodeURIComponent(courseNameFromURL)
+          courseName: decodeURIComponent(courseNameFromURL),
         });
       }
     }
@@ -90,7 +79,7 @@ const StudentsList = () => {
 
   useEffect(() => {
     fetchStudents();
-  }, [batchFilter, courseFilter, searchTerm, currentPage, itemsPerPage]);
+  }, [batchFilter, courseFilter, searchTerm]);
 
   useEffect(() => {
     fetchUploadHistory();
@@ -100,11 +89,11 @@ const StudentsList = () => {
     try {
       const response = await batchAPI.getAllBatches();
       if (response.success) {
-        const activeBatches = response.data.filter(batch => batch.isActive);
+        const activeBatches = response.data.filter((batch) => batch.isActive);
         setBatches(activeBatches);
       }
     } catch (error) {
-      showToast('Error fetching batches', 'error');
+      showToast("Error fetching batches", "error");
     }
   };
 
@@ -112,35 +101,29 @@ const StudentsList = () => {
     try {
       const response = await courseAPI.getAllCourses();
       if (response.success) {
-        const activeCourses = response.data.filter(course => course.isActive);
+        const activeCourses = response.data.filter((course) => course.isActive);
         setCourses(activeCourses);
       }
     } catch (error) {
-      showToast('Error fetching courses', 'error');
+      showToast("Error fetching courses", "error");
     }
   };
 
   const fetchStudents = async () => {
     try {
       setLoading(true);
-      const params = {
-        page: currentPage,
-        limit: itemsPerPage
-      };
+      const params = {};
 
       if (searchTerm) params.search = searchTerm;
-      if (batchFilter !== 'all') params.batchId = batchFilter;
-      if (courseFilter !== 'all') params.courseId = courseFilter;
+      if (batchFilter !== "all") params.batchId = batchFilter;
+      if (courseFilter !== "all") params.courseId = courseFilter;
 
       const response = await studentAPI.getAllStudents(params);
       if (response.success) {
         setStudents(response.data);
-        if (response.pagination) {
-          setPagination(response.pagination);
-        }
       }
     } catch (error) {
-      showToast('Error fetching students', 'error');
+      showToast("Error fetching students", "error");
     } finally {
       setLoading(false);
     }
@@ -153,32 +136,47 @@ const StudentsList = () => {
         setUploadHistory(response.data);
       }
     } catch (error) {
-      console.error('Error fetching upload history:', error);
+      console.error("Error fetching upload history:", error);
     }
   };
 
-  // Handle Delete All Students
+  // In StudentsList.jsx - Update the handleDeleteAllStudents function
+
   const handleDeleteAllStudents = async () => {
     if (students.length === 0) {
-      showToast('No students to delete', 'warning');
+      showToast("No students to delete", "warning");
       setShowDeleteAllConfirm(false);
       return;
     }
 
     setIsDeletingAll(true);
     try {
-      // You need to implement this API endpoint
-      const response = await studentAPI.deleteAllStudents();
+      // Build the same filter params as the fetch function
+      const params = {};
+
+      if (searchTerm) params.search = searchTerm;
+      if (batchFilter !== "all") params.batchId = batchFilter;
+      if (courseFilter !== "all") params.courseId = courseFilter;
+
+      // Log what's being deleted
+      console.log("Deleting students with filters:", params);
+
+      // Use the new endpoint with filters
+      const response = await studentAPI.deleteFilteredStudents(params);
+
       if (response.success) {
-        showToast(`Successfully deleted ${response.data?.deletedCount || students.length} students`, 'success');
+        showToast(
+          `Successfully deleted ${response.data?.deletedCount || students.length} student(s)`,
+          "success",
+        );
         setShowDeleteAllConfirm(false);
         fetchStudents(); // Refresh the list
       } else {
-        showToast(response.message || 'Failed to delete students', 'error');
+        showToast(response.message || "Failed to delete students", "error");
       }
     } catch (error) {
-      console.error('Delete all students error:', error);
-      showToast(error.message || 'Error deleting students', 'error');
+      console.error("Delete filtered students error:", error);
+      showToast(error.message || "Error deleting students", "error");
     } finally {
       setIsDeletingAll(false);
     }
@@ -186,113 +184,121 @@ const StudentsList = () => {
 
   // PDF Generation Function
   const downloadStudentsPDF = () => {
-    if (filteredStudents.length === 0) {
-      showToast('No students to download', 'warning');
+    if (students.length === 0) {
+      showToast("No students to download", "warning");
       return;
     }
 
     setIsGeneratingPDF(true);
 
     try {
-      // Create PDF document
       const doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4'
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4",
       });
 
-      // Add header
       doc.setFontSize(20);
       doc.setTextColor(40, 40, 40);
-      doc.setFont('helvetica', 'bold');
-      doc.text('STUDENTS LIST', 14, 20);
+      doc.setFont("helvetica", "bold");
+      doc.text("STUDENTS LIST", 14, 20);
 
-      // Add date
       doc.setFontSize(10);
       doc.setTextColor(100, 100, 100);
-      doc.setFont('helvetica', 'normal');
-      const date = new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+      doc.setFont("helvetica", "normal");
+      const date = new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       });
       doc.text(`Generated on: ${date}`, 14, 28);
 
-      // Add filters info
-      let filtersText = 'Filters: ';
+      let filtersText = "Filters: ";
       if (selectedBatch) filtersText += `Batch: ${selectedBatch.batchName} `;
-      if (selectedCourse) filtersText += `Course: ${selectedCourse.courseName} `;
+      if (selectedCourse)
+        filtersText += `Course: ${selectedCourse.courseName} `;
       if (searchTerm) filtersText += `Search: "${searchTerm}" `;
-      if (!selectedBatch && !selectedCourse && !searchTerm) filtersText += 'All students';
+      if (!selectedBatch && !selectedCourse && !searchTerm)
+        filtersText += "All students";
 
       doc.setFontSize(9);
       doc.text(filtersText, 14, 35);
 
-      // Prepare table data
-      const tableData = filteredStudents.map((student, index) => [
+      const tableData = students.map((student, index) => [
         index + 1,
-        student.name || 'N/A',
-        student.email || 'N/A',
-        student.uniqueId || 'N/A',
-        student.batchId?.batchName || 'N/A',
-        student.enrolledCourseIds?.map(c => c.courseName).join(', ') || 'N/A',
-        student.finalMark ? `${student.finalMark}%` : 'N/A',
+        student.name || "N/A",
+        student.email || "N/A",
+        student.uniqueId || "N/A",
+        student.batchId?.batchName || "N/A",
+        student.enrolledCourseIds?.map((c) => c.courseName).join(", ") || "N/A",
+        student.finalMark ? `${student.finalMark}%` : "N/A",
         student.completionDate
           ? new Date(student.completionDate).toLocaleDateString()
-          : 'Not completed',
-        student.status || 'Active'
+          : "Not completed",
+        student.status || "Active",
       ]);
 
-      // Add table
       autoTable(doc, {
         startY: 45,
         head: [
-          ['#', 'Name', 'Email', 'Student ID', 'Batch', 'Courses', 'Mark', 'Completion Date', 'Status']
+          [
+            "#",
+            "Name",
+            "Email",
+            "Student ID",
+            "Batch",
+            "Courses",
+            "Mark",
+            "Completion Date",
+            "Status",
+          ],
         ],
         body: tableData,
-        theme: 'grid',
+        theme: "grid",
         styles: {
           fontSize: 8,
           cellPadding: 3,
         },
         headStyles: {
-          fillColor: [59, 130, 246], // Blue color
+          fillColor: [59, 130, 246],
           textColor: 255,
-          fontStyle: 'bold',
+          fontStyle: "bold",
         },
         alternateRowStyles: {
-          fillColor: [245, 245, 245]
+          fillColor: [245, 245, 245],
         },
         columnStyles: {
-          0: { cellWidth: 10 }, // #
-          1: { cellWidth: 30 }, // Name
-          2: { cellWidth: 40 }, // Email
-          3: { cellWidth: 25 }, // Student ID
-          4: { cellWidth: 25 }, // Batch
-          5: { cellWidth: 40 }, // Courses
-          6: { cellWidth: 15 }, // Mark
-          7: { cellWidth: 25 }, // Completion Date
-          8: { cellWidth: 20 }, // Status
+          0: { cellWidth: 10 },
+          1: { cellWidth: 30 },
+          2: { cellWidth: 40 },
+          3: { cellWidth: 25 },
+          4: { cellWidth: 25 },
+          5: { cellWidth: 40 },
+          6: { cellWidth: 15 },
+          7: { cellWidth: 25 },
+          8: { cellWidth: 20 },
         },
-        margin: { left: 14, right: 14 }
+        margin: { left: 14, right: 14 },
       });
 
-      // Add summary statistics
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(11);
-      doc.setFont('helvetica', 'bold');
-      doc.text('SUMMARY', 14, finalY);
+      doc.setFont("helvetica", "bold");
+      doc.text("SUMMARY", 14, finalY);
 
       doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text([
-        `Total Students: ${filteredStudents.length}`,
-        `With Marks: ${stats.withMarks}`,
-        `Completed: ${stats.completed}`,
-        `Average Mark: ${stats.avgMark}%`
-      ], 14, finalY + 8);
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        [
+          `Total Students: ${students.length}`,
+          `With Marks: ${stats.withMarks}`,
+          `Completed: ${stats.completed}`,
+          `Average Mark: ${stats.avgMark}%`,
+        ],
+        14,
+        finalY + 8,
+      );
 
-      // Add page numbers
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -301,76 +307,83 @@ const StudentsList = () => {
         doc.text(
           `Page ${i} of ${pageCount}`,
           doc.internal.pageSize.width - 30,
-          doc.internal.pageSize.height - 10
+          doc.internal.pageSize.height - 10,
         );
       }
 
-      // Save PDF
-      const fileName = `Students_List_${new Date().toISOString().split('T')[0]}.pdf`;
+      const fileName = `Students_List_${new Date().toISOString().split("T")[0]}.pdf`;
       doc.save(fileName);
 
-      showToast('PDF downloaded successfully', 'success');
+      showToast("PDF downloaded successfully", "success");
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      showToast('Failed to generate PDF', 'error');
+      console.error("Error generating PDF:", error);
+      showToast("Failed to generate PDF", "error");
     } finally {
       setIsGeneratingPDF(false);
     }
   };
 
-  // Alternative: Download as Excel/CSV
   const downloadStudentsCSV = () => {
-    if (filteredStudents.length === 0) {
-      showToast('No students to download', 'warning');
+    if (students.length === 0) {
+      showToast("No students to download", "warning");
       return;
     }
 
     try {
-      // Prepare CSV headers
-      const headers = ['Name', 'Email', 'Student ID', 'Batch', 'Courses', 'Mark', 'Completion Date', 'Status', 'Phone', 'Address'];
+      const headers = [
+        "Name",
+        "Email",
+        "Student ID",
+        "Batch",
+        "Courses",
+        "Mark",
+        "Completion Date",
+        "Status",
+        "Phone",
+        "Address",
+      ];
 
-      // Prepare CSV rows
-      const rows = filteredStudents.map(student => [
-        student.name || '',
-        student.email || '',
-        student.uniqueId || '',
-        student.batchId?.batchName || '',
-        student.enrolledCourseIds?.map(c => c.courseName).join(', ') || '',
-        student.finalMark || '',
-        student.completionDate ? new Date(student.completionDate).toLocaleDateString() : '',
-        student.status || '',
-        student.phone || '',
-        student.address || ''
+      const rows = students.map((student) => [
+        student.name || "",
+        student.email || "",
+        student.uniqueId || "",
+        student.batchId?.batchName || "",
+        student.enrolledCourseIds?.map((c) => c.courseName).join(", ") || "",
+        student.finalMark || "",
+        student.completionDate
+          ? new Date(student.completionDate).toLocaleDateString()
+          : "",
+        student.status || "",
+        student.phone || "",
+        student.address || "",
       ]);
 
-      // Convert to CSV
       const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-      ].join('\n');
+        headers.join(","),
+        ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+      ].join("\n");
 
-      // Create download link
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `Students_List_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `Students_List_${new Date().toISOString().split("T")[0]}.csv`,
+      );
+      link.style.visibility = "hidden";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      showToast('CSV downloaded successfully', 'success');
+      showToast("CSV downloaded successfully", "success");
     } catch (error) {
-      console.error('Error generating CSV:', error);
-      showToast('Failed to generate CSV', 'error');
+      console.error("Error generating CSV:", error);
+      showToast("Failed to generate CSV", "error");
     }
   };
 
-  // Combined download function with options
   const handleDownload = () => {
-    // You can show a modal with options here
-    // For now, we'll just download PDF
     downloadStudentsPDF();
   };
 
@@ -378,15 +391,15 @@ const StudentsList = () => {
     try {
       const response = await studentAPI.createStudent(studentData);
       if (response.success) {
-        showToast('Student created successfully', 'success');
+        showToast("Student created successfully", "success");
         setShowForm(false);
         fetchStudents();
       } else {
-        showToast(response.message || 'Failed to create student', 'error');
+        showToast(response.message || "Failed to create student", "error");
       }
     } catch (error) {
-      console.error('Create student error:', error);
-      showToast(error.message || 'Error creating student', 'error');
+      console.error("Create student error:", error);
+      showToast(error.message || "Error creating student", "error");
     }
   };
 
@@ -399,29 +412,33 @@ const StudentsList = () => {
     try {
       const response = await studentAPI.updateStudent(studentId, updatedData);
       if (response.success) {
-        showToast('Student updated successfully', 'success');
+        showToast("Student updated successfully", "success");
         setShowForm(false);
         setEditingStudent(null);
         fetchStudents();
       }
     } catch (error) {
-      showToast('Error updating student', 'error');
+      showToast("Error updating student", "error");
     }
   };
 
   const handleDeleteStudent = async (studentId) => {
-    if (!window.confirm('Are you sure you want to delete this student? This action cannot be undone.')) {
+    if (
+      !window.confirm(
+        "Are you sure you want to delete this student? This action cannot be undone.",
+      )
+    ) {
       return;
     }
 
     try {
       const response = await studentAPI.deleteStudent(studentId);
       if (response.success) {
-        showToast('Student deleted successfully', 'success');
+        showToast("Student deleted successfully", "success");
         fetchStudents();
       }
     } catch (error) {
-      showToast('Error deleting student', 'error');
+      showToast("Error deleting student", "error");
     }
   };
 
@@ -434,13 +451,13 @@ const StudentsList = () => {
     try {
       const response = await bulkUploadAPI.uploadStudents(formData);
       if (response.success) {
-        showToast('File uploaded successfully. Processing...', 'success');
+        showToast("File uploaded successfully. Processing...", "success");
         setShowBulkUpload(false);
         fetchUploadHistory();
         setTimeout(() => fetchStudents(), 3000);
       }
     } catch (error) {
-      showToast('Error uploading file', 'error');
+      showToast("Error uploading file", "error");
     }
   };
 
@@ -448,54 +465,44 @@ const StudentsList = () => {
     try {
       const response = await bulkUploadAPI.downloadTemplate();
       const url = window.URL.createObjectURL(new Blob([response]));
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = url;
-      link.setAttribute('download', 'student_template.xlsx');
+      link.setAttribute("download", "student_template.xlsx");
       document.body.appendChild(link);
       link.click();
       link.remove();
-      showToast('Template downloaded successfully', 'success');
+      showToast("Template downloaded successfully", "success");
     } catch (error) {
-      showToast('Error downloading template', 'error');
+      showToast("Error downloading template", "error");
     }
   };
 
   const clearFilters = () => {
-    setBatchFilter('all');
-    setCourseFilter('all');
+    setBatchFilter("all");
+    setCourseFilter("all");
     setSelectedBatch(null);
     setSelectedCourse(null);
-    setSearchTerm('');
+    setSearchTerm("");
 
     const newSearchParams = new URLSearchParams(searchParams);
-    newSearchParams.delete('batchId');
-    newSearchParams.delete('batchName');
-    newSearchParams.delete('courseId');
-    newSearchParams.delete('courseName');
+    newSearchParams.delete("batchId");
+    newSearchParams.delete("batchName");
+    newSearchParams.delete("courseId");
+    newSearchParams.delete("courseName");
     navigate({ search: newSearchParams.toString() });
   };
 
-  const filteredStudents = students.filter(student => {
-    const matchesSearch = searchTerm === '' ||
-      student.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.uniqueId?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesBatch = batchFilter === 'all' || student.batchId?._id === batchFilter;
-    const matchesCourse = courseFilter === 'all' ||
-      student.enrolledCourseIds?.some(course => course._id === courseFilter);
-
-    return matchesSearch && matchesBatch && matchesCourse;
-  });
-
   const getStats = () => {
     const totalStudents = students.length;
-    const withMarks = students.filter(s => s.finalMark).length;
-    const avgMark = withMarks > 0
-      ? (students.reduce((sum, s) => sum + (s.finalMark || 0), 0) / withMarks).toFixed(1)
-      : 0;
+    const withMarks = students.filter((s) => s.finalMark).length;
+    const avgMark =
+      withMarks > 0
+        ? (
+            students.reduce((sum, s) => sum + (s.finalMark || 0), 0) / withMarks
+          ).toFixed(1)
+        : 0;
 
-    const completed = students.filter(s => s.completionDate).length;
+    const completed = students.filter((s) => s.completionDate).length;
 
     return { totalStudents, withMarks, avgMark, completed };
   };
@@ -548,27 +555,33 @@ const StudentsList = () => {
           {/* View Mode Toggle */}
           <div className="flex bg-white rounded-lg border border-gray-200 p-1 shadow-sm">
             <button
-              onClick={() => setViewMode('table')}
-              className={`p-2.5 rounded-md transition-all duration-300 flex items-center gap-2 ${viewMode === 'table'
-                ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm'
-                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                }`}
+              onClick={() => setViewMode("table")}
+              className={`p-2.5 rounded-md transition-all duration-300 flex items-center gap-2 ${
+                viewMode === "table"
+                  ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm"
+                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              }`}
               title="Table View"
             >
               <i className="fas fa-table text-base"></i>
-              <span className="hidden sm:inline text-sm font-medium">Table</span>
+              <span className="hidden sm:inline text-sm font-medium">
+                Table
+              </span>
             </button>
 
             <button
-              onClick={() => setViewMode('card')}
-              className={`p-2.5 rounded-md transition-all duration-300 flex items-center gap-2 ${viewMode === 'card'
-                ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm'
-                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                }`}
+              onClick={() => setViewMode("card")}
+              className={`p-2.5 rounded-md transition-all duration-300 flex items-center gap-2 ${
+                viewMode === "card"
+                  ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm"
+                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              }`}
               title="Card View"
             >
               <i className="fas fa-th-large text-base"></i>
-              <span className="hidden sm:inline text-sm font-medium">Cards</span>
+              <span className="hidden sm:inline text-sm font-medium">
+                Cards
+              </span>
             </button>
           </div>
 
@@ -591,12 +604,14 @@ const StudentsList = () => {
           <Button
             onClick={handleDownload}
             variant="outline"
-            icon={isGeneratingPDF ? "fas fa-spinner fa-spin" : "fas fa-download"}
+            icon={
+              isGeneratingPDF ? "fas fa-spinner fa-spin" : "fas fa-download"
+            }
             size="medium"
-            disabled={filteredStudents.length === 0 || isGeneratingPDF}
+            disabled={students.length === 0 || isGeneratingPDF}
             className="bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200 hover:from-emerald-100 hover:to-emerald-200 text-emerald-700 hover:text-emerald-800 hover:border-emerald-300"
           >
-            {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
+            {isGeneratingPDF ? "Generating..." : "Download PDF"}
           </Button>
 
           <Button
@@ -630,11 +645,19 @@ const StudentsList = () => {
       {showDeleteAllConfirm && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+            <div
+              className="fixed inset-0 transition-opacity"
+              aria-hidden="true"
+            >
               <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
             </div>
 
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <span
+              className="hidden sm:inline-block sm:align-middle sm:h-screen"
+              aria-hidden="true"
+            >
+              &#8203;
+            </span>
 
             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -648,30 +671,34 @@ const StudentsList = () => {
                     </h3>
                     <div className="mt-2">
                       <p className="text-sm text-gray-500">
-                        Are you sure you want to delete all <span className="font-bold text-red-600">{students.length}</span> students? 
-                        This action cannot be undone and will permanently remove all student records, 
-                        including their enrollment history and academic data.
+                        Are you sure you want to delete all{" "}
+                        <span className="font-bold text-red-600">
+                          {students.length}
+                        </span>{" "}
+                        students? This action cannot be undone and will
+                        permanently remove all student records, including their
+                        enrollment history and academic data.
                       </p>
                     </div>
-                    
-                    {/* Additional warnings */}
+
                     <div className="mt-4 p-3 bg-red-50 rounded-md border border-red-200">
                       <p className="text-xs text-red-700 flex items-start">
                         <i className="fas fa-info-circle mr-2 mt-0.5"></i>
                         <span>
-                          This will also delete associated email logs and certificate records. 
-                          Please make sure you have a backup if needed.
+                          This will also delete associated email logs and
+                          certificate records. Please make sure you have a
+                          backup if needed.
                         </span>
                       </p>
                     </div>
 
-                    {/* Filter info if any */}
                     {(selectedBatch || selectedCourse || searchTerm) && (
                       <div className="mt-4 p-3 bg-yellow-50 rounded-md border border-yellow-200">
                         <p className="text-xs text-yellow-700 flex items-start">
                           <i className="fas fa-filter mr-2 mt-0.5"></i>
                           <span>
-                            Active filters detected. This will delete ALL students, not just filtered ones.
+                            Active filters detected. This will delete ALL
+                            students, not just filtered ones.
                           </span>
                         </p>
                       </div>
@@ -685,9 +712,15 @@ const StudentsList = () => {
                   variant="danger"
                   className="w-full sm:w-auto"
                   disabled={isDeletingAll}
-                  icon={isDeletingAll ? "fas fa-spinner fa-spin" : "fas fa-trash-alt"}
+                  icon={
+                    isDeletingAll
+                      ? "fas fa-spinner fa-spin"
+                      : "fas fa-trash-alt"
+                  }
                 >
-                  {isDeletingAll ? 'Deleting...' : `Delete ${students.length} Students`}
+                  {isDeletingAll
+                    ? "Deleting..."
+                    : `Delete ${students.length} Students`}
                 </Button>
                 <Button
                   onClick={() => setShowDeleteAllConfirm(false)}
@@ -724,7 +757,7 @@ const StudentsList = () => {
               </div>
               {searchTerm && (
                 <button
-                  onClick={() => setSearchTerm('')}
+                  onClick={() => setSearchTerm("")}
                   className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
                 >
                   <i className="fas fa-times"></i>
@@ -743,7 +776,9 @@ const StudentsList = () => {
                 value={batchFilter}
                 onChange={(e) => {
                   setBatchFilter(e.target.value);
-                  const selected = batches.find(b => b._id === e.target.value);
+                  const selected = batches.find(
+                    (b) => b._id === e.target.value,
+                  );
                   setSelectedBatch(selected || null);
                 }}
                 className="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white/80 transition-all duration-300 hover:border-blue-400"
@@ -771,7 +806,9 @@ const StudentsList = () => {
                 value={courseFilter}
                 onChange={(e) => {
                   setCourseFilter(e.target.value);
-                  const selected = courses.find(c => c._id === e.target.value);
+                  const selected = courses.find(
+                    (c) => c._id === e.target.value,
+                  );
                   setSelectedCourse(selected || null);
                 }}
                 className="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white/80 transition-all duration-300 hover:border-blue-400"
@@ -799,7 +836,9 @@ const StudentsList = () => {
             >
               Refresh
             </Button>
-            {(searchTerm || batchFilter !== 'all' || courseFilter !== 'all') && (
+            {(searchTerm ||
+              batchFilter !== "all" ||
+              courseFilter !== "all") && (
               <Button
                 onClick={clearFilters}
                 variant="secondary"
@@ -841,7 +880,7 @@ const StudentsList = () => {
                     )}
                   </p>
                   <p className="text-sm text-gray-600 mt-1">
-                    Showing {filteredStudents.length} of {students.length} students
+                    Showing {students.length} students
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
                     Click "Download PDF" to export this filtered list
@@ -855,36 +894,35 @@ const StudentsList = () => {
 
       {/* Students Content */}
       {loading ? (
-        <LoadingSkeleton type={viewMode === 'card' ? 'card' : 'table'} count={6} />
-      ) : filteredStudents.length === 0 ? (
+        <LoadingSkeleton
+          type={viewMode === "card" ? "card" : "table"}
+          count={6}
+        />
+      ) : students.length === 0 ? (
         <EmptyState
           title="No students found"
           description={
-            searchTerm || batchFilter !== 'all' || courseFilter !== 'all'
-              ? 'Try changing your search or filters'
+            searchTerm || batchFilter !== "all" || courseFilter !== "all"
+              ? "Try changing your search or filters"
               : batches.length === 0
-                ? 'No active batches available. Create a batch first.'
-                : 'Add your first student to get started'
+                ? "No active batches available. Create a batch first."
+                : "Add your first student to get started"
           }
           icon="fas fa-users"
-          actionText={
-            batches.length === 0
-              ? 'Create Batch'
-              : 'Add Student'
-          }
+          actionText={batches.length === 0 ? "Create Batch" : "Add Student"}
           onAction={() => {
             if (batches.length === 0) {
-              showToast('Please create a batch first', 'info');
-              navigate('/batches');
+              showToast("Please create a batch first", "info");
+              navigate("/batches");
             } else {
               setEditingStudent(null);
               setShowForm(true);
             }
           }}
         />
-      ) : viewMode === 'card' ? (
+      ) : viewMode === "card" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredStudents.map((student) => (
+          {students.map((student) => (
             <StudentCard
               key={student._id}
               student={student}
@@ -896,33 +934,21 @@ const StudentsList = () => {
         </div>
       ) : (
         <StudentsTable
-          students={filteredStudents}
+          students={students}
           onEdit={handleEditStudent}
           onDelete={handleDeleteStudent}
           onContact={handleContactStudent}
           ref={tableRef}
-
-          // Pagination Props
-          currentPage={currentPage}
-          itemsPerPage={itemsPerPage}
-          totalItems={pagination.total}
-          totalPages={pagination.totalPages}
-          hasNext={pagination.hasNext}
-          hasPrevious={pagination.hasPrevious}
-          onPageChange={(page) => setCurrentPage(page)}
-          onLimitChange={(limit) => {
-            setItemsPerPage(limit);
-            setCurrentPage(1);
-          }}
         />
       )}
 
       {/* Student Form Modal */}
       {showForm && (
         <StudentForm
-          onSubmit={editingStudent ?
-            (data) => handleUpdateStudent(editingStudent._id, data) :
-            handleCreateStudent
+          onSubmit={
+            editingStudent
+              ? (data) => handleUpdateStudent(editingStudent._id, data)
+              : handleCreateStudent
           }
           onClose={() => {
             setShowForm(false);
@@ -931,9 +957,9 @@ const StudentsList = () => {
           initialData={editingStudent}
           batches={batches}
           courses={courses}
-          title={editingStudent ? 'Edit Student' : 'Add New Student'}
-          defaultBatchId={batchFilter !== 'all' ? batchFilter : undefined}
-          defaultCourseIds={courseFilter !== 'all' ? [courseFilter] : undefined}
+          title={editingStudent ? "Edit Student" : "Add New Student"}
+          defaultBatchId={batchFilter !== "all" ? batchFilter : undefined}
+          defaultCourseIds={courseFilter !== "all" ? [courseFilter] : undefined}
         />
       )}
 
@@ -949,8 +975,8 @@ const StudentsList = () => {
           batches={batches}
           courses={courses}
           uploadHistory={uploadHistory}
-          defaultBatchId={batchFilter !== 'all' ? batchFilter : undefined}
-          defaultCourseIds={courseFilter !== 'all' ? [courseFilter] : undefined}
+          defaultBatchId={batchFilter !== "all" ? batchFilter : undefined}
+          defaultCourseIds={courseFilter !== "all" ? [courseFilter] : undefined}
         />
       )}
 
@@ -963,30 +989,9 @@ const StudentsList = () => {
             setContactStudent(null);
           }}
           onSuccess={() => {
-            fetchStudents(); // Refresh to update any logs if needed
+            fetchStudents();
           }}
         />
-      )}
-
-      {/* Pagination Controls - only for Card View */}
-      {/* For Table view, it's integrated inside */}
-      {!loading && students.length > 0 && viewMode === 'card' && (
-        <div className="mt-4">
-          <Pagination
-            currentPage={currentPage}
-            itemsPerPage={itemsPerPage}
-            totalItems={pagination.total}
-            totalPages={pagination.totalPages}
-            hasNext={pagination.hasNext}
-            hasPrevious={pagination.hasPrevious}
-            onPageChange={(page) => setCurrentPage(page)}
-            onLimitChange={(limit) => {
-              setItemsPerPage(limit);
-              setCurrentPage(1);
-            }}
-            className="rounded-xl shadow-sm border"
-          />
-        </div>
       )}
     </div>
   );

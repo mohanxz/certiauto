@@ -19,23 +19,23 @@ export const createStudent = async (req: Request, res: Response) => {
   }
 };
 
-/* ================= GET ALL STUDENTS ================= */
 export const getAllStudents = async (req: Request, res: Response) => {
   try {
-    const result = await studentService.getAllStudents(req.query);
+    const students = await studentService.getAllStudents(req.query);
+    
+    // Send just the students array without pagination
     sendResponse(
       res,
       200,
       true,
-      result.data,
-      "Students fetched successfully",
-      result.pagination,
+      students, // Just the array directly
+      "Students fetched successfully"
+      // Removed the pagination parameter
     );
   } catch (error) {
     sendResponse(res, 500, false, null, (error as Error).message);
   }
 };
-
 /* ================= GET STUDENT BY ID ================= */
 export const getStudentById = async (req: Request, res: Response) => {
   try {
@@ -253,18 +253,37 @@ export const deleteStudent = async (req: Request, res: Response) => {
     sendResponse(res, 500, false, null, (error as Error).message);
   }
 };
-// In your student.controller.ts, add this function and make sure it's exported
+// In student.controller.ts - Replace the deleteAllStudents function
 
-/* ================= DELETE ALL STUDENTS ================= */
-export const deleteAllStudents = async (req: Request, res: Response) => {
+/* ================= DELETE FILTERED STUDENTS ================= */
+export const deleteFilteredStudents = async (req: Request, res: Response) => {
   try {
-    const result = await studentService.deleteAllStudents();
+    // Build filter from query parameters (same as getAllStudents)
+    const filter: any = {};
+
+    if (req.query.search) {
+      filter.$or = [
+        { name: { $regex: req.query.search, $options: "i" } },
+        { email: { $regex: req.query.search, $options: "i" } },
+        { phoneNumber: { $regex: req.query.search, $options: "i" } },
+        { uniqueId: { $regex: req.query.search, $options: "i" } },
+      ];
+    }
+
+    if (req.query.courseId) filter.enrolledCourseIds = req.query.courseId;
+    if (req.query.batchId) filter.batchId = req.query.batchId;
+
+    // Log what's being deleted (for debugging)
+    console.log("Deleting students with filter:", filter);
+
+    const result = await studentService.deleteFilteredStudents(filter);
+    
     sendResponse(
       res, 
       200, 
       true, 
       { deletedCount: result.deletedCount }, 
-      `${result.deletedCount} students deleted successfully`
+      `${result.deletedCount} student(s) deleted successfully`
     );
   } catch (error) {
     sendResponse(res, 500, false, null, (error as Error).message);

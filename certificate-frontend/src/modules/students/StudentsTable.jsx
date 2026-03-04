@@ -1,84 +1,74 @@
-import React from 'react';
-import Pagination from '../../components/common/Pagination';
+import React from "react";
 
-const StudentsTable = ({
-  students,
-  onEdit,
-  onDelete,
-  onContact,
-  // Pagination Props
-  currentPage,
-  itemsPerPage,
-  totalItems,
-  totalPages,
-  hasNext,
-  hasPrevious,
-  onPageChange,
-  onLimitChange
-}) => {
+const StudentsTable = ({ students, onEdit, onDelete, onContact }) => {
   const getCourses = (student) => {
     if (!student.enrolledCourseIds || student.enrolledCourseIds.length === 0) {
-      return 'No courses';
+      return "No courses";
     }
-    return student.enrolledCourseIds.map(course => course.courseName).join(', ');
+    return student.enrolledCourseIds
+      .map((course) => course.courseName)
+      .join(", ");
   };
 
   const getBatch = (student) => {
-    if (student.batchId && typeof student.batchId === 'object') {
+    if (student.batchId && typeof student.batchId === "object") {
       return student.batchId.batchName;
     }
-    return 'Unknown Batch';
+    return "Unknown Batch";
   };
 
   const formatPhone = (phone) => {
-    if (!phone) return 'N/A';
-    return phone.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+    if (!phone) return "N/A";
+    return phone.replace(/(\d{3})(\d{3})(\d{4})/, "$1-$2-$3");
   };
 
   const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
   };
 
   const getPerformanceColor = (mark) => {
-    if (!mark) return 'gray';
-    if (mark >= 80) return 'green';
-    if (mark >= 60) return 'yellow';
-    return 'red';
+    if (!mark) return "gray";
+    if (mark >= 80) return "green";
+    if (mark >= 60) return "yellow";
+    return "red";
   };
 
   return (
-    <div className="flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm relative overflow-hidden" style={{ maxHeight: 'calc(100vh - 140px)' }}>
+    <div
+      className="flex flex-col bg-white rounded-xl border border-gray-200 shadow-sm relative overflow-hidden"
+      style={{ maxHeight: "calc(100vh - 140px)" }}
+    >
       {/* Scrollbar styles */}
       <style jsx>{`
         .scroll-container::-webkit-scrollbar {
           width: 10px;
           height: 10px;
         }
-        
+
         .scroll-container::-webkit-scrollbar-track {
           background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
           border-radius: 10px;
         }
-        
+
         .scroll-container::-webkit-scrollbar-thumb {
           background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
           border-radius: 10px;
           border: 2px solid #f1f5f9;
         }
-        
+
         .scroll-container::-webkit-scrollbar-thumb:hover {
           background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
         }
-        
+
         .scroll-container::-webkit-scrollbar-corner {
           background: #f1f5f9;
         }
-        
+
         /* Firefox */
         .scroll-container {
           scrollbar-width: thin;
@@ -89,9 +79,9 @@ const StudentsTable = ({
       <div
         className="scroll-container flex-1"
         style={{
-          position: 'relative',
-          overflowY: 'auto',
-          overflowX: 'auto',
+          position: "relative",
+          overflowY: "auto",
+          overflowX: "auto",
         }}
       >
         <table className="min-w-full divide-y divide-gray-200">
@@ -136,7 +126,7 @@ const StudentsTable = ({
                           {student.name}
                         </div>
                         <div className="text-xs text-gray-500">
-                          ID: {student.uniqueId || 'No ID'}
+                          ID: {student.uniqueId || "No ID"}
                         </div>
                       </div>
                     </div>
@@ -148,7 +138,9 @@ const StudentsTable = ({
                       <div className="text-sm text-gray-900 truncate max-w-xs">
                         {student.email}
                       </div>
-                      <div className="text-xs text-gray-500">{formatPhone(student.phoneNumber)}</div>
+                      <div className="text-xs text-gray-500">
+                        {formatPhone(student.phoneNumber)}
+                      </div>
                       {student.address && (
                         <div className="text-xs text-gray-500 truncate max-w-xs">
                           {student.address}
@@ -167,11 +159,12 @@ const StudentsTable = ({
                       <div className="text-xs text-gray-600">
                         {student.enrolledCourseIds?.length || 0} course(s)
                       </div>
-                      {student.enrolledCourseIds && student.enrolledCourseIds.length > 0 && (
-                        <div className="text-xs text-gray-500 truncate max-w-xs">
-                          {getCourses(student)}
-                        </div>
-                      )}
+                      {student.enrolledCourseIds &&
+                        student.enrolledCourseIds.length > 0 && (
+                          <div className="text-xs text-gray-500 truncate max-w-xs">
+                            {getCourses(student)}
+                          </div>
+                        )}
                     </div>
                   </td>
 
@@ -182,21 +175,36 @@ const StudentsTable = ({
                         <div className="flex items-center">
                           <div className="w-24 bg-gray-200 rounded-full h-2 mr-2">
                             <div
-                              className={`h-2 rounded-full ${performanceColor === 'green' ? 'bg-green-500' :
-                                performanceColor === 'yellow' ? 'bg-yellow-500' : 'bg-red-500'
-                                }`}
-                              style={{ width: `${Math.min(student.finalMark, 100)}%` }}
+                              className={`h-2 rounded-full ${
+                                performanceColor === "green"
+                                  ? "bg-green-500"
+                                  : performanceColor === "yellow"
+                                    ? "bg-yellow-500"
+                                    : "bg-red-500"
+                              }`}
+                              style={{
+                                width: `${Math.min(student.finalMark, 100)}%`,
+                              }}
                             ></div>
                           </div>
                           <span className="text-sm font-semibold text-gray-900">
                             {student.finalMark}%
                           </span>
                         </div>
-                        <div className={`text-xs ${performanceColor === 'green' ? 'text-green-600' :
-                          performanceColor === 'yellow' ? 'text-yellow-600' : 'text-red-600'
-                          }`}>
-                          {performanceColor === 'green' ? 'Excellent' :
-                            performanceColor === 'yellow' ? 'Good' : 'Needs Improvement'}
+                        <div
+                          className={`text-xs ${
+                            performanceColor === "green"
+                              ? "text-green-600"
+                              : performanceColor === "yellow"
+                                ? "text-yellow-600"
+                                : "text-red-600"
+                          }`}
+                        >
+                          {performanceColor === "green"
+                            ? "Excellent"
+                            : performanceColor === "yellow"
+                              ? "Good"
+                              : "Needs Improvement"}
                         </div>
                       </div>
                     ) : (
@@ -257,20 +265,7 @@ const StudentsTable = ({
           </tbody>
         </table>
       </div>
-
-      {/* Integrated Pagination Footer */}
-      <Pagination
-        currentPage={currentPage}
-        itemsPerPage={itemsPerPage}
-        totalItems={totalItems}
-        totalPages={totalPages}
-        hasNext={hasNext}
-        hasPrevious={hasPrevious}
-        onPageChange={onPageChange}
-        onLimitChange={onLimitChange}
-        className="rounded-b-none border-x-0 border-b-0"
-      />
-    </div >
+    </div>
   );
 };
 

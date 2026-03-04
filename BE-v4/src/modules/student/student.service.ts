@@ -94,10 +94,7 @@ export const createStudent = async (
  * =====================================================
  */
 export const getAllStudents = async (query: any) => {
-  const page = parseInt(query.page) || 1;
-  const limit = parseInt(query.limit) || 10;
-  const skip = (page - 1) * limit;
-
+  // Remove pagination - get all students
   const filter: any = {};
 
   if (query.search) {
@@ -115,23 +112,13 @@ export const getAllStudents = async (query: any) => {
   const students = await Student.find(filter)
     .populate("enrolledCourseIds", "courseName courseCode")
     .populate("batchId", "batchName batchCode")
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit);
+    .sort({ createdAt: -1 }); // Removed skip and limit
 
   const total = await Student.countDocuments(filter);
 
-  return {
-    data: students,
-    pagination: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-  };
+  // Return just the data array directly (no pagination object)
+  return students;
 };
-
 /**
  * =====================================================
  * GET STUDENT BY ID
@@ -192,7 +179,8 @@ export const deleteStudent = async (id: string) => {
   return deleted;
 };
 
-export const deleteAllStudents = async () => {
-  const result = await Student.deleteMany({});
+export const deleteFilteredStudents = async (filter: any) => {
+  // This will delete only students matching the filter criteria
+  const result = await Student.deleteMany(filter);
   return result;
 };
