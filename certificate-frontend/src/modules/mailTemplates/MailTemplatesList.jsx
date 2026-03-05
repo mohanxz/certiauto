@@ -1,3 +1,4 @@
+// src/modules/mailTemplates/MailTemplatesList.jsx
 import React, { useState, useEffect } from "react";
 import { mailTemplatesAPI } from "../../api/temp";
 import LoadingSkeleton from "../../components/common/LoadingSkeleton";
@@ -6,8 +7,10 @@ import Button from "../../components/ui/Button";
 import MailTemplatesTable from "./MailTemplatesTable";
 import MailTemplateForm from "./MailTemplateForm";
 import { useToast } from "../../hooks/useToast";
+import { useTheme } from "../../context/ThemeContext";
 
 const MailTemplatesList = () => {
+  const { isDarkMode } = useTheme();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -135,19 +138,21 @@ const MailTemplatesList = () => {
   });
 
   return (
-    <div className="p-6">
+    <div className={`p-6 min-h-screen ${isDarkMode ? 'bg-gray-900' : ''}`}>
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Mail Templates</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className={`text-2xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Mail Templates
+          </h1>
+          <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             Create and manage email templates
           </p>
         </div>
 
         <Button
           onClick={handleCreateTemplate}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
           icon="fas fa-plus"
           size="medium"
         >
@@ -163,13 +168,21 @@ const MailTemplatesList = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search templates..."
-            className="w-full rounded-lg border border-gray-300 px-4 py-2 pl-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            className={`w-full rounded-lg border px-4 py-2 pl-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' 
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+            }`}
           />
-          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <i className={`fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-sm ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-400'
+          }`}></i>
           {searchTerm && (
             <button
               onClick={() => setSearchTerm("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className={`absolute right-3 top-1/2 -translate-y-1/2 ${
+                isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'
+              }`}
             >
               <i className="fas fa-times"></i>
             </button>

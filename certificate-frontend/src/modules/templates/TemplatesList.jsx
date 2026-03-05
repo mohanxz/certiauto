@@ -1,3 +1,4 @@
+// src/modules/templates/TemplatesList.jsx
 import React, { useState, useEffect } from "react";
 import { certificateTemplatesAPI } from "../../api/certificateTemplates";
 import LoadingSkeleton from "../../components/common/LoadingSkeleton";
@@ -7,10 +8,12 @@ import TemplatesTable from "./TemplatesTable";
 import TemplateCard from "./TemplateCard";
 import TemplateUploadForm from "./TemplateUploadForm";
 import { useToast } from "../../hooks/useToast";
+import { useTheme } from "../../context/ThemeContext";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 const TemplatesList = () => {
+  const { isDarkMode } = useTheme();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showUploadForm, setShowUploadForm] = useState(false);
@@ -104,11 +107,12 @@ const TemplatesList = () => {
       });
 
       doc.setFontSize(20);
-      doc.setTextColor(40, 40, 40);
+      doc.setTextColor(isDarkMode ? 200 : 40, isDarkMode ? 200 : 40, isDarkMode ? 200 : 40);
       doc.setFont("helvetica", "bold");
       doc.text("Certificate Templates Report", 14, 20);
 
       doc.setFontSize(10);
+      doc.setTextColor(isDarkMode ? 150 : 100, isDarkMode ? 150 : 100, isDarkMode ? 150 : 100);
       const date = new Date().toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
@@ -138,6 +142,9 @@ const TemplatesList = () => {
           textColor: 255,
           fontStyle: "bold",
         },
+        alternateRowStyles: {
+          fillColor: isDarkMode ? [60, 60, 60] : [245, 245, 245],
+        },
         margin: { left: 14, right: 14 },
       });
 
@@ -145,6 +152,7 @@ const TemplatesList = () => {
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
         doc.text(
           `Page ${i} of ${pageCount}`,
           doc.internal.pageSize.width / 2,
@@ -223,18 +231,54 @@ const TemplatesList = () => {
   });
 
   return (
-    <div className="p-6">
+    <div className={`p-6 min-h-screen ${isDarkMode ? 'bg-gray-900' : ''}`}>
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Certificate Templates</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className={`text-2xl font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            Certificate Templates
+          </h1>
+          <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             Manage certificate templates for automated generation
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-         
+          {/* View Mode Toggle */}
+          <div className={`flex rounded-lg border p-1 mr-2 ${
+            isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+          }`}>
+            <button
+              onClick={() => setViewMode("table")}
+              className={`p-2 rounded-md transition-all duration-200 ${
+                viewMode === "table"
+                  ? isDarkMode
+                    ? 'bg-blue-900/30 text-blue-300 border border-blue-800'
+                    : 'bg-blue-50 text-blue-600 border border-blue-200'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+              }`}
+              title="Table View"
+            >
+              <i className="fas fa-table"></i>
+            </button>
+            <button
+              onClick={() => setViewMode("card")}
+              className={`p-2 rounded-md transition-all duration-200 ${
+                viewMode === "card"
+                  ? isDarkMode
+                    ? 'bg-blue-900/30 text-blue-300 border border-blue-800'
+                    : 'bg-blue-50 text-blue-600 border border-blue-200'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+              }`}
+              title="Card View"
+            >
+              <i className="fas fa-th-large"></i>
+            </button>
+          </div>
 
           {/* Download PDF */}
           <Button
@@ -243,6 +287,10 @@ const TemplatesList = () => {
             icon={isGeneratingPDF ? "fas fa-spinner fa-spin" : "fas fa-download"}
             size="small"
             disabled={filteredTemplates.length === 0 || isGeneratingPDF}
+            className={isDarkMode 
+              ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+              : ''
+            }
           >
             {isGeneratingPDF ? "Generating..." : "Export PDF"}
           </Button>
@@ -250,7 +298,7 @@ const TemplatesList = () => {
           {/* Upload Button */}
           <Button
             onClick={() => setShowUploadForm(true)}
-            className="bg-blue-600 hover:bg-emerald-700 text-white"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white"
             icon="fas fa-plus"
             size="small"
           >
@@ -267,13 +315,21 @@ const TemplatesList = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search templates by name or type..."
-            className="w-full rounded-md border border-gray-300 px-4 py-2 pl-10 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+            className={`w-full rounded-md border px-4 py-2 pl-10 focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' 
+                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+            }`}
           />
-          <i className="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+          <i className={`fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-sm ${
+            isDarkMode ? 'text-gray-400' : 'text-gray-400'
+          }`}></i>
           {searchTerm && (
             <button
               onClick={() => setSearchTerm("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className={`absolute right-3 top-1/2 -translate-y-1/2 ${
+                isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'
+              }`}
             >
               <i className="fas fa-times"></i>
             </button>
@@ -281,7 +337,7 @@ const TemplatesList = () => {
         </div>
         
         {searchTerm && (
-          <p className="text-sm text-gray-500 mt-2">
+          <p className={`text-sm mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             Found {filteredTemplates.length} template{filteredTemplates.length !== 1 ? 's' : ''}
           </p>
         )}

@@ -1,7 +1,9 @@
+// src/modules/programs/ProgramForm.jsx
 import React, { useState, useEffect } from 'react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import { useToast } from '../../hooks/useToast';
+import { useTheme } from '../../context/ThemeContext';
 
 const ProgramForm = ({ 
   onSubmit, 
@@ -10,6 +12,7 @@ const ProgramForm = ({
   title = initialData ? 'Edit Program' : 'Create New Program'
 }) => {
   const { showToast } = useToast();
+  const { isDarkMode } = useTheme();
   
   const [formData, setFormData] = useState({
     programName: '',
@@ -81,18 +84,33 @@ const ProgramForm = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 backdrop-blur-sm">
       <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center">
-        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+        <div className={`
+          inline-block align-bottom rounded-lg text-left overflow-hidden shadow-xl 
+          transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full
+          ${isDarkMode ? 'bg-gray-800' : 'bg-white'}
+        `}>
           {/* Header */}
-          <div className="bg-white px-6 py-4 border-b border-gray-200">
+          <div className={`
+            px-6 py-4 border-b
+            ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}
+          `}>
             <div className="flex justify-between items-center">
-              <h3 className="text-xl font-semibold text-gray-900">
+              <h3 className={`text-xl font-semibold ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>
                 {title}
               </h3>
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-500 transition-colors"
+                className={`
+                  transition-colors
+                  ${isDarkMode 
+                    ? 'text-gray-400 hover:text-gray-300' 
+                    : 'text-gray-400 hover:text-gray-500'
+                  }
+                `}
                 disabled={loading}
               >
                 <i className="fas fa-times text-lg"></i>
@@ -115,15 +133,35 @@ const ProgramForm = ({
                 disabled={loading}
               />
 
-              <div>
-             
-               
-               
+              <div className="space-y-2">
+                <label className={`block text-sm font-medium ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  rows="4"
+                  className={`
+                    w-full px-4 py-2 rounded-lg border transition-colors duration-200
+                    focus:outline-none focus:ring-2 focus:ring-blue-500/50
+                    ${isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                      : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                    }
+                  `}
+                  placeholder="Enter program description (optional)"
+                  disabled={loading}
+                />
               </div>
             </div>
 
             {/* Form Actions */}
-            <div className="mt-6 pt-4 border-t border-gray-200">
+            <div className={`mt-6 pt-4 border-t ${
+              isDarkMode ? 'border-gray-700' : 'border-gray-200'
+            }`}>
               <div className="flex justify-end space-x-3">
                 <Button
                   type="button"
@@ -138,7 +176,7 @@ const ProgramForm = ({
                   type="submit"
                   loading={loading}
                   disabled={loading}
-                  className="px-8 bg-blue-600 hover:bg-blue-700"
+                  className="px-8 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
                 >
                   {initialData ? 'Update Program' : 'Create Program'}
                 </Button>

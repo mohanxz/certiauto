@@ -1,4 +1,4 @@
-// components/bulk-email/BulkEmailCampaign.jsx
+// src/components/bulk-email/BulkEmailCampaign.jsx
 import React, { useState, useEffect } from "react";
 import Button from "../../components/ui/Button";
 import StudentSelector from "./StudentSelector";
@@ -16,8 +16,10 @@ import StudentForm from "../students/StudentForm";
 import { studentAPI } from "../../api/students";
 import { batchAPI } from "../../api/batches";
 import { courseAPI } from "../../api/courses";
+import { useTheme } from "../../context/ThemeContext";
 
 const BulkEmailCampaign = () => {
+  const { isDarkMode } = useTheme();
   const [step, setStep] = useState(1);
   const [selectedStudents, setSelectedStudents] = useState([]);
   const [filters, setFilters] = useState({
@@ -29,7 +31,7 @@ const BulkEmailCampaign = () => {
   });
   const [campaignData, setCampaignData] = useState({
     title: "",
-    type: "COURSE_CERTIFICATE", // Changed from "CERTIFICATE" to "COURSE_CERTIFICATE"
+    type: "COURSE_CERTIFICATE",
     subject: "",
     body: "",
     certificateTemplateId: "",
@@ -80,7 +82,6 @@ const BulkEmailCampaign = () => {
     loadBatchesAndCourses();
     loadEmailConfigs();
 
-    // Auto-generate campaign name on component mount
     setCampaignData((prev) => ({
       ...prev,
       title: generateCampaignName(),
@@ -116,7 +117,6 @@ const BulkEmailCampaign = () => {
     try {
       setLoading(true);
 
-      // Load batches
       const batchResponse = await batchAPI.getAllBatches({ isActive: true });
       if (batchResponse.data?.success) {
         setBatches(batchResponse.data.data || []);
@@ -129,7 +129,6 @@ const BulkEmailCampaign = () => {
         setBatches(batchData.filter((batch) => batch.isActive));
       }
 
-      // Load courses
       const courseResponse = await courseAPI.getAllCourses({ isActive: true });
       if (courseResponse.data?.success) {
         setCourses(courseResponse.data.data || []);
@@ -149,7 +148,6 @@ const BulkEmailCampaign = () => {
     }
   };
 
-  // Email Configuration Functions
   const loadEmailConfigs = async () => {
     try {
       console.log("🔄 Loading email configurations...");
@@ -167,15 +165,12 @@ const BulkEmailCampaign = () => {
         setEmailConfigs(data.data);
         console.log(`📧 Loaded ${data.data.length} email configs`);
 
-        // Find active email
         const active = data.data.find((email) => email.isActive);
         if (active) {
           console.log(" Active email found:", active.email);
           setActiveEmailId(active._id);
 
-          // Auto-select active email for campaign
           setCampaignData((prev) => {
-            // Only update if senderEmailId is empty or different from active
             if (!prev.senderEmailId || prev.senderEmailId !== active._id) {
               console.log(
                 `📧 Setting campaign to use active email: ${active.email}`,
@@ -244,7 +239,6 @@ const BulkEmailCampaign = () => {
         setShowEmailForm(false);
         setEmailFormData({ email: "", appPassword: "", provider: "gmail" });
 
-        // If first email, auto-set as active
         if (emailConfigs.length === 0) {
           showToast("Setting this as your active email...", "info");
           setTimeout(() => {
@@ -289,10 +283,8 @@ const BulkEmailCampaign = () => {
         console.log(` Email activated: ${selectedConfig.email}`);
         showToast(`Active email set to: ${selectedConfig.email}`, "success");
 
-        // Update local state
         setActiveEmailId(id);
 
-        // IMPORTANT: Update campaign to use this email
         setCampaignData((prev) => ({
           ...prev,
           senderEmailId: id,
@@ -300,10 +292,8 @@ const BulkEmailCampaign = () => {
 
         console.log(`📧 Campaign now using: ${selectedConfig.email}`);
 
-        // Reload to get updated configs
         await loadEmailConfigs();
 
-        // Show success message
         setTimeout(() => {
           showToast(
             ` All emails will be sent from: ${selectedConfig.email}`,
@@ -388,7 +378,6 @@ const BulkEmailCampaign = () => {
         showToast("Email configuration deleted successfully", "success");
         loadEmailConfigs();
 
-        // If we deleted the active email, clear selection
         if (activeEmailId === id) {
           setActiveEmailId(null);
           setCampaignData((prev) => ({
@@ -420,7 +409,6 @@ const BulkEmailCampaign = () => {
     if (selectedConfig) {
       console.log(`📧 Selected email: ${selectedConfig.email}`);
 
-      // Check if selected email is active
       if (!selectedConfig.isActive) {
         const confirmSetActive = window.confirm(
           `The email "${selectedConfig.email}" is not active.\n\n` +
@@ -435,7 +423,6 @@ const BulkEmailCampaign = () => {
     }
   };
 
-  // Original handlers
   const handleMailTemplateChange = (e) => {
     const templateId = e.target.value;
     if (templateId === "") {
@@ -488,13 +475,11 @@ const BulkEmailCampaign = () => {
       return false;
     }
 
-    // Check if sender email is selected
     if (!campaignData.senderEmailId) {
       showToast("Please select a sender email", "error");
       return false;
     }
 
-    // Check if selected email exists
     const selectedEmail = emailConfigs.find(
       (e) => e._id === campaignData.senderEmailId,
     );
@@ -503,7 +488,6 @@ const BulkEmailCampaign = () => {
       return false;
     }
 
-    // Warn if selected email is not active
     if (!selectedEmail.isActive) {
       const confirmed = window.confirm(
         `⚠️ IMPORTANT: The email "${selectedEmail.email}" is NOT active.\n\n` +
@@ -516,7 +500,7 @@ const BulkEmailCampaign = () => {
 
       if (confirmed) {
         handleSetActiveEmail(campaignData.senderEmailId);
-        return false; // Prevent continuing until email is activated
+        return false;
       }
     }
 
@@ -550,17 +534,14 @@ const BulkEmailCampaign = () => {
   };
 
   const handleSendAll = () => {
-    // First validate all steps
     if (!validateStep1()) return;
     if (!validateStep2()) return;
 
-    // Additional validation for sender email
     if (!campaignData.senderEmailId) {
       showToast("Please select a sender email", "error");
       return;
     }
 
-    // Check if email config exists
     const selectedEmail = emailConfigs.find(
       (e) => e._id === campaignData.senderEmailId,
     );
@@ -569,7 +550,6 @@ const BulkEmailCampaign = () => {
       return;
     }
 
-    // Show warning if email is not active
     let warningMessage = `Start campaign "${campaignData.title}" and send ${selectedStudents.length} emails`;
 
     if (!selectedEmail.isActive) {
@@ -578,7 +558,6 @@ const BulkEmailCampaign = () => {
       warningMessage += ` from ${selectedEmail.email}`;
     }
 
-    // Add certificate type to warning
     const certTypeText =
       campaignData.type === "COURSE_CERTIFICATE"
         ? "Course Completion Certificate"
@@ -596,7 +575,6 @@ const BulkEmailCampaign = () => {
       return;
     }
 
-    // Debug logging
     console.log("=== STARTING EMAIL CAMPAIGN ===");
     console.log("Campaign Type:", campaignData.type);
     console.log("Sender Email ID:", campaignData.senderEmailId);
@@ -617,7 +595,6 @@ const BulkEmailCampaign = () => {
       return;
     }
 
-    // Final warning for inactive email
     if (!selectedEmail.isActive) {
       const proceed = window.confirm(
         `FINAL WARNING: "${selectedEmail.email}" is NOT active.\n\n` +
@@ -640,7 +617,7 @@ const BulkEmailCampaign = () => {
 
       const campaignPayload = {
         title: campaignData.title,
-        type: campaignData.type, // Now sends correct type (COURSE_CERTIFICATE or INTERNSHIP_CERTIFICATE)
+        type: campaignData.type,
         subject: campaignData.subject,
         body: campaignData.body,
         mailTemplateId: campaignData.mailTemplateId || null,
@@ -678,7 +655,6 @@ const BulkEmailCampaign = () => {
           "success",
         );
 
-        // Show success animation
         if (window.confetti) {
           window.confetti({
             particleCount: 100,
@@ -687,13 +663,12 @@ const BulkEmailCampaign = () => {
           });
         }
 
-        // Reset form with new auto-generated name
         setTimeout(() => {
           setStep(1);
           setSelectedStudents([]);
           setCampaignData({
             title: generateCampaignName(),
-            type: "COURSE_CERTIFICATE", // Reset to default
+            type: "COURSE_CERTIFICATE",
             subject: "",
             body: "",
             certificateTemplateId: "",
@@ -782,7 +757,6 @@ const BulkEmailCampaign = () => {
   const handleSendIndividual = async (student) => {
     if (!validateStep2()) return;
 
-    // Additional validation for sender email
     if (!campaignData.senderEmailId) {
       showToast("Please select a sender email", "error");
       return;
@@ -796,7 +770,6 @@ const BulkEmailCampaign = () => {
       return;
     }
 
-    // Check if email is active
     if (!selectedEmail.isActive) {
       const confirm = window.confirm(
         `The email "${selectedEmail.email}" is not active.\n\n` +
@@ -815,7 +788,7 @@ const BulkEmailCampaign = () => {
 
       const payload = {
         title: `Individual - ${student.name}`,
-        type: campaignData.type, // Now sends correct type
+        type: campaignData.type,
         subject: campaignData.subject,
         body: campaignData.body,
         mailTemplateId: campaignData.mailTemplateId || null,
@@ -852,7 +825,6 @@ const BulkEmailCampaign = () => {
     }
   };
 
-  // Student management functions
   const handleEditStudent = (student) => {
     setEditingStudent(student);
     setShowStudentForm(true);
@@ -867,7 +839,6 @@ const BulkEmailCampaign = () => {
       if (response.success || response.data?.success) {
         showToast("Student updated successfully", "success");
 
-        // Update the student in selectedStudents list with success animation
         setSelectedStudents((prev) =>
           prev.map((student) =>
             student._id === studentId
@@ -880,7 +851,6 @@ const BulkEmailCampaign = () => {
           ),
         );
 
-        // Clear animation after 2 seconds
         setTimeout(() => {
           setSelectedStudents((prev) =>
             prev.map((student) =>
@@ -908,7 +878,6 @@ const BulkEmailCampaign = () => {
     showToast("🗑️ Student removed from list", "info");
   };
 
-  // Debug function to check current state
   const debugCurrentState = () => {
     console.log("=== DEBUG STATE ===");
     console.log("Campaign Type:", campaignData.type);
@@ -934,11 +903,13 @@ const BulkEmailCampaign = () => {
     }
   };
 
-  // Render Email Configuration Section
+  // Render Email Configuration Section with Dark Mode
   const renderEmailConfigSection = () => (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className={`rounded-lg border p-6 ${
+      isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+    }`}>
       <div className="flex justify-between items-center mb-4">
-        <h4 className="text-md font-semibold text-gray-800">
+        <h4 className={`text-md font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
           Sender Email Configuration
         </h4>
         <div className="flex gap-2">
@@ -949,7 +920,10 @@ const BulkEmailCampaign = () => {
             variant="outline"
             size="small"
             icon="fas fa-plus"
-            className="border-green-600 text-green-600"
+            className={isDarkMode 
+              ? 'border-green-700 text-green-400 hover:bg-green-900/20' 
+              : 'border-green-600 text-green-600'
+            }
           >
             Generate Gmail App Password
           </Button>
@@ -958,7 +932,10 @@ const BulkEmailCampaign = () => {
             variant="outline"
             size="small"
             icon="fas fa-plus"
-            className="border-green-600 text-green-600"
+            className={isDarkMode 
+              ? 'border-green-700 text-green-400 hover:bg-green-900/20' 
+              : 'border-green-600 text-green-600'
+            }
           >
             Add Email
           </Button>
@@ -966,10 +943,14 @@ const BulkEmailCampaign = () => {
       </div>
 
       {emailConfigs.length === 0 ? (
-        <div className="text-center py-8 bg-gray-50 rounded-lg">
-          <i className="fas fa-envelope text-4xl text-gray-300 mb-3"></i>
-          <p className="text-gray-600 mb-2">No email configurations found</p>
-          <p className="text-sm text-gray-500 mb-4">
+        <div className={`text-center py-8 rounded-lg ${
+          isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+        }`}>
+          <i className={`fas fa-envelope text-4xl mb-3 ${
+            isDarkMode ? 'text-gray-500' : 'text-gray-300'
+          }`}></i>
+          <p className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>No email configurations found</p>
+          <p className={`text-sm mb-4 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
             Add an email configuration to send emails
           </p>
           <Button
@@ -983,13 +964,12 @@ const BulkEmailCampaign = () => {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Sender Email Selection */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label className={`block text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                 Select Sender Email *
               </label>
-              <span className="text-xs text-gray-500">
+              <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                 Active email:{" "}
                 {emailConfigs.find((e) => e.isActive)?.email || "None"}
               </span>
@@ -997,7 +977,11 @@ const BulkEmailCampaign = () => {
             <select
               value={campaignData.senderEmailId || ""}
               onChange={handleSenderEmailChange}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
               required
             >
               <option value="">-- Choose sender email --</option>
@@ -1011,8 +995,8 @@ const BulkEmailCampaign = () => {
             {campaignData.senderEmailId && (
               <div className="mt-2">
                 <div className="flex items-center text-sm">
-                  <span className="text-gray-600 mr-2">Selected:</span>
-                  <span className="font-medium">
+                  <span className={isDarkMode ? 'text-gray-400' : 'text-gray-600'}>Selected:</span>
+                  <span className={`font-medium ml-2 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                     {
                       emailConfigs.find(
                         (e) => e._id === campaignData.senderEmailId,
@@ -1022,17 +1006,24 @@ const BulkEmailCampaign = () => {
                   {emailConfigs.find(
                     (e) => e._id === campaignData.senderEmailId,
                   )?.isActive ? (
-                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      isDarkMode 
+                        ? 'bg-green-900/30 text-green-300 border border-green-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
                       <i className="fas fa-check mr-1"></i> Active
                     </span>
                   ) : (
-                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                      <i className="fas fa-exclamation-triangle mr-1"></i> Not
-                      Active
+                    <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      isDarkMode 
+                        ? 'bg-yellow-900/30 text-yellow-300 border border-yellow-800' 
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      <i className="fas fa-exclamation-triangle mr-1"></i> Not Active
                     </span>
                   )}
                 </div>
-                <div className="mt-1 text-xs text-blue-600">
+                <div className={`mt-1 text-xs ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
                   <i className="fas fa-info-circle mr-1"></i>
                   All emails will be sent from this address
                 </div>
@@ -1040,9 +1031,8 @@ const BulkEmailCampaign = () => {
             )}
           </div>
 
-          {/* Email Configurations List - Added missing section */}
-          <div className="mt-4 border-t pt-4">
-            <h5 className="text-sm font-medium text-gray-700 mb-2">
+          <div className={`mt-4 border-t pt-4 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+            <h5 className={`text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
               Configured Emails ({emailConfigs.length})
             </h5>
             <div className="space-y-2 max-h-48 overflow-y-auto">
@@ -1051,32 +1041,44 @@ const BulkEmailCampaign = () => {
                   key={config._id}
                   className={`flex items-center justify-between p-2 rounded-lg border ${
                     config.isActive
-                      ? "border-green-200 bg-green-50"
-                      : "border-gray-200 bg-white"
+                      ? isDarkMode
+                        ? 'border-green-800 bg-green-900/20'
+                        : 'border-green-200 bg-green-50'
+                      : isDarkMode
+                        ? 'border-gray-700 bg-gray-800'
+                        : 'border-gray-200 bg-white'
                   }`}
                 >
                   <div className="flex items-center">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center mr-3 ${
-                        config.isActive ? "bg-green-100" : "bg-gray-100"
+                        config.isActive 
+                          ? isDarkMode ? 'bg-green-900/30' : 'bg-green-100'
+                          : isDarkMode ? 'bg-gray-700' : 'bg-gray-100'
                       }`}
                     >
                       <i
                         className={`fas fa-envelope ${
-                          config.isActive ? "text-green-600" : "text-gray-500"
+                          config.isActive 
+                            ? isDarkMode ? 'text-green-400' : 'text-green-600'
+                            : isDarkMode ? 'text-gray-400' : 'text-gray-500'
                         }`}
                       ></i>
                     </div>
                     <div>
-                      <div className="text-sm font-medium flex items-center">
+                      <div className={`text-sm font-medium flex items-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                         {config.email}
                         {config.isActive && (
-                          <span className="ml-2 text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full">
+                          <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${
+                            isDarkMode 
+                              ? 'bg-green-900/30 text-green-300' 
+                              : 'bg-green-100 text-green-600'
+                          }`}>
                             Active
                           </span>
                         )}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         {config.provider}
                       </div>
                     </div>
@@ -1085,7 +1087,11 @@ const BulkEmailCampaign = () => {
                     <button
                       onClick={() => handleTestEmail(config)}
                       disabled={testingEmail === config._id}
-                      className="p-1 text-blue-600 hover:bg-blue-50 rounded"
+                      className={`p-1 rounded ${
+                        isDarkMode 
+                          ? 'text-blue-400 hover:bg-blue-900/20' 
+                          : 'text-blue-600 hover:bg-blue-50'
+                      }`}
                       title="Test Email"
                     >
                       <i
@@ -1100,7 +1106,11 @@ const BulkEmailCampaign = () => {
                       <button
                         onClick={() => handleSetActiveEmail(config._id)}
                         disabled={activatingEmail === config._id}
-                        className="p-1 text-green-600 hover:bg-green-50 rounded"
+                        className={`p-1 rounded ${
+                          isDarkMode 
+                            ? 'text-green-400 hover:bg-green-900/20' 
+                            : 'text-green-600 hover:bg-green-50'
+                        }`}
                         title="Set as Active"
                       >
                         <i
@@ -1114,7 +1124,11 @@ const BulkEmailCampaign = () => {
                     )}
                     <button
                       onClick={() => handleDeleteEmailConfig(config._id)}
-                      className="p-1 text-red-600 hover:bg-red-50 rounded"
+                      className={`p-1 rounded ${
+                        isDarkMode 
+                          ? 'text-red-400 hover:bg-red-900/20' 
+                          : 'text-red-600 hover:bg-red-50'
+                      }`}
                       title="Delete"
                     >
                       <i className="fas fa-trash"></i>
@@ -1129,16 +1143,13 @@ const BulkEmailCampaign = () => {
     </div>
   );
 
-  // Render step content
+  // Render step content with Dark Mode
   const renderStepContent = () => {
     switch (step) {
       case 1:
         return (
           <div className="space-y-6">
-            {/* Email Configuration Section */}
             {renderEmailConfigSection()}
-
-            {/* Student Selection */}
             <StudentSelector
               onSelectionChange={handleStudentSelection}
               onFilterChange={handleFilterChange}
@@ -1151,22 +1162,27 @@ const BulkEmailCampaign = () => {
       case 2:
         return (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h4 className="text-md font-semibold text-gray-800 mb-4">
+            <div className={`rounded-lg border p-6 ${
+              isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            }`}>
+              <h4 className={`text-md font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 Email Content
               </h4>
 
               <div className="grid grid-cols-1 gap-6">
-                {/* NEW: Certificate Type Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Certificate Type *
                   </label>
                   <select
                     name="type"
                     value={campaignData.type}
                     onChange={handleInputChange}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                    className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
                   >
                     <option value="COURSE_CERTIFICATE">
                       Course Completion Certificate
@@ -1175,21 +1191,24 @@ const BulkEmailCampaign = () => {
                       Internship Certificate
                     </option>
                   </select>
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className={`mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     Select the type of certificate to generate and send
                   </p>
                 </div>
 
-                {/* Mail Template Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Choose Mail Template
                   </label>
                   <div className="flex gap-3 items-start">
                     <select
                       value={campaignData.mailTemplateId || ""}
                       onChange={handleMailTemplateChange}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                     >
                       <option value="">-- Select a mail template --</option>
                       {mailTemplates.map((template) => (
@@ -1203,13 +1222,16 @@ const BulkEmailCampaign = () => {
                       variant="outline"
                       size="small"
                       icon="fas fa-external-link-alt"
-                      className="whitespace-nowrap"
+                      className={isDarkMode 
+                        ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                        : 'whitespace-nowrap'
+                      }
                     >
                       Manage Mail Templates
                     </Button>
                   </div>
                   {campaignData.mailTemplateId && (
-                    <div className="mt-2 text-xs text-green-600">
+                    <div className={`mt-2 text-xs ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}>
                       <i className="fas fa-check-circle mr-1"></i>
                       Template selected
                     </div>
@@ -1217,7 +1239,7 @@ const BulkEmailCampaign = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Email Subject *
                   </label>
                   <input
@@ -1226,13 +1248,17 @@ const BulkEmailCampaign = () => {
                     value={campaignData.subject}
                     onChange={handleInputChange}
                     placeholder="e.g., Your Certificate is Ready!"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                    }`}
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Email Body *
                   </label>
                   <textarea
@@ -1241,26 +1267,33 @@ const BulkEmailCampaign = () => {
                     onChange={handleInputChange}
                     rows={8}
                     placeholder="Dear {name}, ..."
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                    }`}
                     required
                   />
-                  <div className="mt-2 text-xs text-gray-500">
+                  <div className={`mt-2 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                     Available placeholders: {"{name}"}, {"{program}"},{" "}
                     {"{course}"}, {"{batch}"}, {"{finalMark}"},{" "}
                     {"{completionDate}"}, {"{uniqueId}"}, {"{certificateId}"}
                   </div>
                 </div>
 
-                {/* Certificate Template Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className={`block text-sm font-medium mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Certificate Template *
                   </label>
                   <div className="flex gap-3 items-start">
                     <select
                       value={campaignData.certificateTemplateId || ""}
                       onChange={handleCertificateTemplateChange}
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                      className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white' 
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                       required
                     >
                       <option value="">
@@ -1277,13 +1310,16 @@ const BulkEmailCampaign = () => {
                       variant="outline"
                       size="small"
                       icon="fas fa-external-link-alt"
-                      className="whitespace-nowrap border-purple-600 text-purple-600"
+                      className={isDarkMode 
+                        ? 'border-purple-700 text-purple-400 hover:bg-purple-900/20' 
+                        : 'border-purple-600 text-purple-600'
+                      }
                     >
                       Manage Certi Templates
                     </Button>
                   </div>
                   {campaignData.certificateTemplateId && (
-                    <div className="mt-2 text-xs text-purple-600">
+                    <div className={`mt-2 text-xs ${isDarkMode ? 'text-purple-400' : 'text-purple-600'}`}>
                       <i className="fas fa-check-circle mr-1"></i>
                       Certificate template selected
                     </div>
@@ -1299,7 +1335,6 @@ const BulkEmailCampaign = () => {
           (e) => e._id === campaignData.senderEmailId,
         );
 
-        // Get certificate type display name
         const getCertificateTypeDisplay = () => {
           if (campaignData.type === "COURSE_CERTIFICATE") {
             return "Course Completion Certificate";
@@ -1309,111 +1344,127 @@ const BulkEmailCampaign = () => {
           return "Certificate";
         };
 
-        // Get certificate type icon
         const getCertificateTypeIcon = () => {
           return campaignData.type === "COURSE_CERTIFICATE"
             ? "fa-graduation-cap"
             : "fa-briefcase";
         };
 
-        // Get certificate type color
         const getCertificateTypeColor = () => {
           return campaignData.type === "COURSE_CERTIFICATE"
-            ? "text-blue-600"
-            : "text-green-600";
+            ? isDarkMode ? "text-blue-400" : "text-blue-600"
+            : isDarkMode ? "text-green-400" : "text-green-600";
         };
 
         return (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg border border-gray-200 p-6">
-              <h4 className="text-md font-semibold text-gray-800 mb-4">
+            <div className={`rounded-lg border p-6 ${
+              isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            }`}>
+              <h4 className={`text-md font-semibold mb-4 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                 Review & Send Campaign
               </h4>
 
               <div className="space-y-4">
-                {/* Campaign Overview */}
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <div className="text-sm text-blue-600">Campaign</div>
-                    <div className="text-lg font-semibold truncate">
+                  <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50'}`}>
+                    <div className={`text-sm ${isDarkMode ? 'text-blue-300' : 'text-blue-600'}`}>Campaign</div>
+                    <div className={`text-lg font-semibold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                       {campaignData.title}
                     </div>
-                    <div className="text-xs text-blue-500 mt-1">
+                    <div className={`text-xs mt-1 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`}>
                       Auto-generated
                     </div>
                   </div>
-                  <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-sm text-green-600">Recipients</div>
-                    <div className="text-lg font-semibold">
+                  <div className={`p-4 rounded-lg ${isDarkMode ? 'bg-green-900/20' : 'bg-green-50'}`}>
+                    <div className={`text-sm ${isDarkMode ? 'text-green-300' : 'text-green-600'}`}>Recipients</div>
+                    <div className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                       {selectedStudents.length} students
                     </div>
                   </div>
-                  <div
-                    className={`${campaignData.type === "COURSE_CERTIFICATE" ? "bg-blue-50" : "bg-green-50"} p-4 rounded-lg`}
-                  >
-                    <div
-                      className={`text-sm ${campaignData.type === "COURSE_CERTIFICATE" ? "text-blue-600" : "text-green-600"}`}
-                    >
+                  <div className={`p-4 rounded-lg ${
+                    campaignData.type === "COURSE_CERTIFICATE"
+                      ? isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50'
+                      : isDarkMode ? 'bg-green-900/20' : 'bg-green-50'
+                  }`}>
+                    <div className={`text-sm ${campaignData.type === "COURSE_CERTIFICATE" ? (isDarkMode ? 'text-blue-300' : 'text-blue-600') : (isDarkMode ? 'text-green-300' : 'text-green-600')}`}>
                       Type
                     </div>
-                    <div className="text-lg font-semibold flex items-center">
-                      <i
-                        className={`fas ${getCertificateTypeIcon()} mr-2 ${getCertificateTypeColor()}`}
-                      ></i>
+                    <div className={`text-lg font-semibold flex items-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                      <i className={`fas ${getCertificateTypeIcon()} mr-2 ${getCertificateTypeColor()}`}></i>
                       {getCertificateTypeDisplay()}
                     </div>
-                    <div
-                      className={`text-xs ${campaignData.type === "COURSE_CERTIFICATE" ? "text-blue-500" : "text-green-500"} mt-1`}
-                    >
+                    <div className={`text-xs mt-1 ${
+                      campaignData.type === "COURSE_CERTIFICATE"
+                        ? isDarkMode ? 'text-blue-400' : 'text-blue-500'
+                        : isDarkMode ? 'text-green-400' : 'text-green-500'
+                    }`}>
                       PDF attachment included
                     </div>
                   </div>
-                  <div
-                    className={`p-4 rounded-lg ${selectedEmail?.isActive ? "bg-yellow-50" : "bg-red-50"}`}
-                  >
-                    <div
-                      className={`text-sm ${selectedEmail?.isActive ? "text-yellow-600" : "text-red-600"}`}
-                    >
+                  <div className={`p-4 rounded-lg ${
+                    selectedEmail?.isActive
+                      ? isDarkMode ? 'bg-yellow-900/20' : 'bg-yellow-50'
+                      : isDarkMode ? 'bg-red-900/20' : 'bg-red-50'
+                  }`}>
+                    <div className={`text-sm ${
+                      selectedEmail?.isActive
+                        ? isDarkMode ? 'text-yellow-300' : 'text-yellow-600'
+                        : isDarkMode ? 'text-red-300' : 'text-red-600'
+                    }`}>
                       Sender
                     </div>
-                    <div className="text-lg font-semibold">
+                    <div className={`text-lg font-semibold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                       {selectedEmail?.email || "Not selected"}
                     </div>
-                    <div
-                      className={`text-xs mt-1 ${selectedEmail?.isActive ? "text-yellow-500" : "text-red-500"}`}
-                    >
+                    <div className={`text-xs mt-1 ${
+                      selectedEmail?.isActive
+                        ? isDarkMode ? 'text-yellow-400' : 'text-yellow-500'
+                        : isDarkMode ? 'text-red-400' : 'text-red-500'
+                    }`}>
                       {selectedEmail?.isActive ? "Active ✓" : "NOT ACTIVE ⚠️"}
                     </div>
                   </div>
                 </div>
 
-                {/* Certificate Type Details */}
-                <div className="border-t border-gray-200 pt-4">
-                  <h5 className="text-sm font-medium text-gray-700 mb-3">
+                <div className={`border-t pt-4 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <h5 className={`text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Certificate Details
                   </h5>
-                  <div
-                    className={`flex items-center p-3 rounded-lg ${campaignData.type === "COURSE_CERTIFICATE" ? "bg-blue-50 border border-blue-200" : "bg-green-50 border border-green-200"}`}
-                  >
-                    <div
-                      className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${campaignData.type === "COURSE_CERTIFICATE" ? "bg-blue-100" : "bg-green-100"}`}
-                    >
-                      <i
-                        className={`fas ${getCertificateTypeIcon()} ${campaignData.type === "COURSE_CERTIFICATE" ? "text-blue-600" : "text-green-600"}`}
-                      ></i>
+                  <div className={`flex items-center p-3 rounded-lg border ${
+                    campaignData.type === "COURSE_CERTIFICATE"
+                      ? isDarkMode
+                        ? 'bg-blue-900/20 border-blue-800'
+                        : 'bg-blue-50 border-blue-200'
+                      : isDarkMode
+                        ? 'bg-green-900/20 border-green-800'
+                        : 'bg-green-50 border-green-200'
+                  }`}>
+                    <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${
+                      campaignData.type === "COURSE_CERTIFICATE"
+                        ? isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100'
+                        : isDarkMode ? 'bg-green-900/30' : 'bg-green-100'
+                    }`}>
+                      <i className={`fas ${getCertificateTypeIcon()} ${
+                        campaignData.type === "COURSE_CERTIFICATE"
+                          ? isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                          : isDarkMode ? 'text-green-400' : 'text-green-600'
+                      }`}></i>
                     </div>
                     <div className="ml-3">
-                      <div className="font-medium text-gray-900">
+                      <div className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                         {getCertificateTypeDisplay()}
                       </div>
-                      <div
-                        className={`text-sm ${campaignData.type === "COURSE_CERTIFICATE" ? "text-blue-600" : "text-green-600"}`}
-                      >
+                      <div className={`text-sm ${
+                        campaignData.type === "COURSE_CERTIFICATE"
+                          ? isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                          : isDarkMode ? 'text-green-400' : 'text-green-600'
+                      }`}>
                         {campaignData.type === "COURSE_CERTIFICATE"
                           ? "Format: CNTTCPP + YY + 5-digit serial (e.g., CNTTCPP2500001)"
                           : "Format: UDYAM-<STATE>-<BRANCH>-7-digit serial (e.g., UDYAM-TN-02-0000001)"}
                       </div>
-                      <div className="text-xs text-gray-500 mt-1">
+                      <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         {campaignData.type === "COURSE_CERTIFICATE"
                           ? "Course Completion Certificate ID will be generated and stored permanently"
                           : "Internship Certificate ID will be generated and stored permanently"}
@@ -1422,53 +1473,71 @@ const BulkEmailCampaign = () => {
                   </div>
                 </div>
 
-                {/* Sender Email Info */}
                 {selectedEmail && (
-                  <div className="border-t border-gray-200 pt-4">
-                    <h5 className="text-sm font-medium text-gray-700 mb-3">
+                  <div className={`border-t pt-4 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <h5 className={`text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Sender Information
                     </h5>
-                    <div
-                      className={`flex items-center p-3 rounded-lg ${selectedEmail.isActive ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}
-                    >
-                      <div
-                        className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${selectedEmail.isActive ? "bg-green-100" : "bg-red-100"}`}
-                      >
+                    <div className={`flex items-center p-3 rounded-lg border ${
+                      selectedEmail.isActive
+                        ? isDarkMode
+                          ? 'bg-green-900/20 border-green-800'
+                          : 'bg-green-50 border-green-200'
+                        : isDarkMode
+                          ? 'bg-red-900/20 border-red-800'
+                          : 'bg-red-50 border-red-200'
+                    }`}>
+                      <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${
+                        selectedEmail.isActive
+                          ? isDarkMode ? 'bg-green-900/30' : 'bg-green-100'
+                          : isDarkMode ? 'bg-red-900/30' : 'bg-red-100'
+                      }`}>
                         {selectedEmail.isActive ? (
-                          <i className="fas fa-check text-green-600"></i>
+                          <i className={`fas fa-check ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}></i>
                         ) : (
-                          <i className="fas fa-exclamation-triangle text-red-600"></i>
+                          <i className={`fas fa-exclamation-triangle ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}></i>
                         )}
                       </div>
                       <div className="ml-3">
-                        <div className="font-medium text-gray-900">
+                        <div className={`font-medium flex items-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                           {selectedEmail.email}
                           {selectedEmail.isActive ? (
-                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              isDarkMode 
+                                ? 'bg-green-900/30 text-green-300 border border-green-800' 
+                                : 'bg-green-100 text-green-800'
+                            }`}>
                               <i className="fas fa-check mr-1"></i> Active
                             </span>
                           ) : (
-                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                              <i className="fas fa-exclamation-triangle mr-1"></i>{" "}
-                              Not Active
+                            <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              isDarkMode 
+                                ? 'bg-red-900/30 text-red-300 border border-red-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              <i className="fas fa-exclamation-triangle mr-1"></i> Not Active
                             </span>
                           )}
                         </div>
-                        <div
-                          className={`text-sm ${selectedEmail.isActive ? "text-green-600" : "text-red-600"}`}
-                        >
+                        <div className={`text-sm ${
+                          selectedEmail.isActive
+                            ? isDarkMode ? 'text-green-400' : 'text-green-600'
+                            : isDarkMode ? 'text-red-400' : 'text-red-600'
+                        }`}>
                           {selectedEmail.isActive
                             ? "All emails will be sent from this address"
                             : "⚠️ Emails may fail to send. Activate this email first."}
                         </div>
                         {!selectedEmail.isActive && (
                           <Button
-                            onClick={() =>
-                              handleSetActiveEmail(selectedEmail._id)
-                            }
+                            onClick={() => handleSetActiveEmail(selectedEmail._id)}
                             variant="outline"
                             size="extra-small"
-                            className="mt-2 border-red-600 text-red-600 hover:bg-red-50"
+                            className={`mt-2 ${
+                              isDarkMode 
+                                ? 'border-red-700 text-red-400 hover:bg-red-900/20' 
+                                : 'border-red-600 text-red-600 hover:bg-red-50'
+                            }`}
                             icon={
                               activatingEmail === selectedEmail._id
                                 ? "fas fa-spinner fa-spin"
@@ -1484,40 +1553,48 @@ const BulkEmailCampaign = () => {
                   </div>
                 )}
 
-                {/* Email Preview */}
-                <div className="border-t border-gray-200 pt-4">
-                  <h5 className="text-sm font-medium text-gray-700 mb-3">
+                <div className={`border-t pt-4 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                  <h5 className={`text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Email Preview
                   </h5>
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="font-semibold text-gray-800 mb-2">
+                  <div className={`p-4 rounded-lg ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                  }`}>
+                    <div className={`font-semibold mb-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                       Subject: {campaignData.subject}
                     </div>
-                    <div className="text-gray-600 whitespace-pre-line bg-white p-3 rounded">
+                    <div className={`whitespace-pre-line p-3 rounded ${
+                      isDarkMode ? 'bg-gray-800 text-gray-300' : 'bg-white text-gray-600'
+                    }`}>
                       {campaignData.body}
                     </div>
                   </div>
                 </div>
 
-                {/* Certificate Preview */}
                 {campaignData.certificateTemplateId && (
-                  <div className="border-t border-gray-200 pt-4">
-                    <h5 className="text-sm font-medium text-gray-700 mb-3">
+                  <div className={`border-t pt-4 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                    <h5 className={`text-sm font-medium mb-3 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Certificate Included
                     </h5>
-                    <div
-                      className={`flex items-center ${campaignData.type === "COURSE_CERTIFICATE" ? "text-blue-600 bg-blue-50" : "text-green-600 bg-green-50"} p-3 rounded-lg`}
-                    >
-                      <i
-                        className={`fas ${getCertificateTypeIcon()} text-xl mr-3`}
-                      ></i>
+                    <div className={`flex items-center p-3 rounded-lg ${
+                      campaignData.type === "COURSE_CERTIFICATE"
+                        ? isDarkMode ? 'bg-blue-900/20' : 'bg-blue-50'
+                        : isDarkMode ? 'bg-green-900/20' : 'bg-green-50'
+                    }`}>
+                      <i className={`fas ${getCertificateTypeIcon()} text-xl mr-3 ${
+                        campaignData.type === "COURSE_CERTIFICATE"
+                          ? isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                          : isDarkMode ? 'text-green-400' : 'text-green-600'
+                      }`}></i>
                       <div>
-                        <div className="font-medium">
+                        <div className={`font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                           {getCertificateTypeDisplay()} (PDF)
                         </div>
-                        <div
-                          className={`text-sm ${campaignData.type === "COURSE_CERTIFICATE" ? "text-blue-500" : "text-green-500"}`}
-                        >
+                        <div className={`text-sm ${
+                          campaignData.type === "COURSE_CERTIFICATE"
+                            ? isDarkMode ? 'text-blue-400' : 'text-blue-500'
+                            : isDarkMode ? 'text-green-400' : 'text-green-500'
+                        }`}>
                           Template:{" "}
                           {certificateTemplates.find(
                             (t) => t._id === campaignData.certificateTemplateId,
@@ -1528,25 +1605,28 @@ const BulkEmailCampaign = () => {
                   </div>
                 )}
 
-                {/* Final Warning for Inactive Email */}
                 {selectedEmail && !selectedEmail.isActive && (
-                  <div className="border-t border-red-200 pt-4">
-                    <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className={`border-t pt-4 ${isDarkMode ? 'border-red-800' : 'border-red-200'}`}>
+                    <div className={`p-4 rounded-lg border ${
+                      isDarkMode 
+                        ? 'bg-red-900/20 border-red-800' 
+                        : 'bg-red-50 border-red-200'
+                    }`}>
                       <div className="flex items-center">
-                        <i className="fas fa-exclamation-triangle text-red-600 mr-3 text-xl"></i>
+                        <i className={`fas fa-exclamation-triangle mr-3 text-xl ${
+                          isDarkMode ? 'text-red-400' : 'text-red-600'
+                        }`}></i>
                         <div>
-                          <div className="font-medium text-red-800">
+                          <div className={`font-medium ${isDarkMode ? 'text-red-300' : 'text-red-800'}`}>
                             ⚠️ IMPORTANT: Email is Not Active
                           </div>
-                          <div className="text-sm text-red-600 mt-1">
+                          <div className={`text-sm mt-1 ${isDarkMode ? 'text-red-400' : 'text-red-600'}`}>
                             The selected email "{selectedEmail.email}" is not
                             active. Emails will likely fail to send. Please
                             activate it first.
                           </div>
                           <Button
-                            onClick={() =>
-                              handleSetActiveEmail(selectedEmail._id)
-                            }
+                            onClick={() => handleSetActiveEmail(selectedEmail._id)}
                             variant="danger"
                             size="small"
                             className="mt-2"
@@ -1565,10 +1645,9 @@ const BulkEmailCampaign = () => {
                   </div>
                 )}
 
-                {/* Editable Student List */}
-                <div className="border-t border-gray-200 pt-4">
+                <div className={`border-t pt-4 ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                   <div className="flex justify-between items-center mb-3">
-                    <h5 className="text-sm font-medium text-gray-700">
+                    <h5 className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                       Selected Students ({selectedStudents.length})
                     </h5>
                     <div className="flex gap-2">
@@ -1577,7 +1656,10 @@ const BulkEmailCampaign = () => {
                         variant="outline"
                         size="small"
                         icon="fas fa-user-plus"
-                        className="border-blue-600 text-blue-600 hover:bg-blue-50"
+                        className={isDarkMode 
+                          ? 'border-blue-700 text-blue-400 hover:bg-blue-900/20' 
+                          : 'border-blue-600 text-blue-600 hover:bg-blue-50'
+                        }
                       >
                         Add More Students
                       </Button>
@@ -1591,7 +1673,10 @@ const BulkEmailCampaign = () => {
                             : "fas fa-file-archive"
                         }
                         loading={downloading === "all"}
-                        className="border-green-600 text-green-600 hover:bg-green-50"
+                        className={isDarkMode 
+                          ? 'border-green-700 text-green-400 hover:bg-green-900/20' 
+                          : 'border-green-600 text-green-600 hover:bg-green-50'
+                        }
                       >
                         {downloading === "all"
                           ? "Downloading..."
@@ -1620,47 +1705,67 @@ const BulkEmailCampaign = () => {
                     </div>
                   </div>
 
-                  <div className="bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                  <div className={`rounded-lg p-4 max-h-96 overflow-y-auto ${
+                    isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+                  }`}>
                     <div className="space-y-2">
                       {selectedStudents.map((student) => (
                         <div
                           key={student._id}
                           className={`flex items-center justify-between p-3 rounded-lg border transition-all duration-300 ${
                             student._updated
-                              ? "border-green-300 bg-green-50"
-                              : "bg-white border-gray-200"
+                              ? isDarkMode
+                                ? 'border-green-800 bg-green-900/20'
+                                : 'border-green-300 bg-green-50'
+                              : isDarkMode
+                                ? 'bg-gray-800 border-gray-600'
+                                : 'bg-white border-gray-200'
                           }`}
                         >
                           <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${
+                              isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100'
+                            }`}>
                               {updatingStudent === student._id ? (
                                 <i className="fas fa-spinner fa-spin text-blue-600"></i>
                               ) : student._updated ? (
-                                <i className="fas fa-check text-green-600"></i>
+                                <i className={`fas fa-check ${isDarkMode ? 'text-green-400' : 'text-green-600'}`}></i>
                               ) : (
-                                <i className="fas fa-user text-blue-600"></i>
+                                <i className={`fas fa-user ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}></i>
                               )}
                             </div>
                             <div className="ml-3">
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className={`text-sm font-medium flex items-center ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                 {student.name}
-                                <span className="ml-2 text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded">
+                                <span className={`ml-2 text-xs px-2 py-1 rounded ${
+                                  isDarkMode 
+                                    ? 'bg-blue-900/30 text-blue-300' 
+                                    : 'bg-blue-100 text-blue-600'
+                                }`}>
                                   {student.uniqueId}
                                 </span>
                                 {updatingStudent === student._id && (
-                                  <span className="ml-2 text-xs px-2 py-1 bg-blue-100 text-blue-600 rounded">
+                                  <span className={`ml-2 text-xs px-2 py-1 rounded ${
+                                    isDarkMode 
+                                      ? 'bg-blue-900/30 text-blue-300' 
+                                      : 'bg-blue-100 text-blue-600'
+                                  }`}>
                                     <i className="fas fa-spinner fa-spin mr-1"></i>
                                     Updating...
                                   </span>
                                 )}
                                 {student._updated && (
-                                  <span className="ml-2 text-xs px-2 py-1 bg-green-100 text-green-600 rounded">
+                                  <span className={`ml-2 text-xs px-2 py-1 rounded ${
+                                    isDarkMode 
+                                      ? 'bg-green-900/30 text-green-300' 
+                                      : 'bg-green-100 text-green-600'
+                                  }`}>
                                     <i className="fas fa-check mr-1"></i>
                                     Updated!
                                   </span>
                                 )}
                               </div>
-                              <div className="text-xs text-gray-500">
+                              <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                 {student.email} •{" "}
                                 {student.batchId?.batchName || "No Batch"}
                                 {student.finalMark &&
@@ -1676,7 +1781,10 @@ const BulkEmailCampaign = () => {
                               variant="ghost"
                               size="extra-small"
                               icon="fas fa-edit"
-                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                              className={isDarkMode 
+                                ? 'text-blue-400 hover:text-blue-300 hover:bg-blue-900/20' 
+                                : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
+                              }
                               title="Edit Student"
                               disabled={
                                 updatingStudent === student._id || processing
@@ -1694,7 +1802,10 @@ const BulkEmailCampaign = () => {
                                   : "fas fa-download"
                               }
                               loading={downloading === student._id}
-                              className="text-green-600 hover:text-green-800 hover:bg-green-50"
+                              className={isDarkMode 
+                                ? 'text-green-400 hover:text-green-300 hover:bg-green-900/20' 
+                                : 'text-green-600 hover:text-green-800 hover:bg-green-50'
+                              }
                               title="Download Certificate"
                               disabled={
                                 downloading ||
@@ -1714,7 +1825,10 @@ const BulkEmailCampaign = () => {
                                   : "fas fa-paper-plane"
                               }
                               loading={sendingIndividual === student._id}
-                              className="text-blue-600 hover:text-blue-800 hover:bg-blue-50"
+                              className={isDarkMode 
+                                ? 'text-blue-400 hover:text-blue-300 hover:bg-blue-900/20' 
+                                : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
+                              }
                               title="Send Individual Email"
                               disabled={
                                 sendingIndividual ||
@@ -1731,7 +1845,10 @@ const BulkEmailCampaign = () => {
                               variant="ghost"
                               size="extra-small"
                               icon="fas fa-times"
-                              className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                              className={isDarkMode 
+                                ? 'text-red-400 hover:text-red-300 hover:bg-red-900/20' 
+                                : 'text-red-600 hover:text-red-800 hover:bg-red-50'
+                              }
                               title="Remove from List"
                               disabled={processing}
                             >
@@ -1760,20 +1877,30 @@ const BulkEmailCampaign = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-800">Bulk Email Campaign</h2>
+        <h2 className={`text-xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+          Bulk Email Campaign
+        </h2>
         <div className="flex items-center gap-2">
-          <div className="text-sm text-gray-500">Step {step} of 3</div>
+          <div className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+            Step {step} of 3
+          </div>
           <button
             onClick={debugCurrentState}
-            className="ml-4 px-3 py-1 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+            className={`ml-4 px-3 py-1 text-xs rounded ${
+              isDarkMode 
+                ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
           >
             Debug
           </button>
         </div>
       </div>
 
-      {/* Progress Steps */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
+      {/* Progress Steps - Dark mode aware */}
+      <div className={`rounded-lg border p-4 ${
+        isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+      }`}>
         <div className="flex items-center justify-between">
           {[1, 2, 3].map((stepNumber) => (
             <div key={stepNumber} className="flex items-center">
@@ -1781,7 +1908,7 @@ const BulkEmailCampaign = () => {
                 className={`h-8 w-8 rounded-full flex items-center justify-center ${
                   step >= stepNumber
                     ? "bg-blue-600 text-white"
-                    : "bg-gray-200 text-gray-500"
+                    : isDarkMode ? "bg-gray-700 text-gray-400" : "bg-gray-200 text-gray-500"
                 }`}
               >
                 {step > stepNumber ? (
@@ -1792,7 +1919,9 @@ const BulkEmailCampaign = () => {
               </div>
               <div
                 className={`ml-2 text-sm font-medium ${
-                  step >= stepNumber ? "text-blue-600" : "text-gray-500"
+                  step >= stepNumber
+                    ? isDarkMode ? "text-blue-400" : "text-blue-600"
+                    : isDarkMode ? "text-gray-400" : "text-gray-500"
                 }`}
               >
                 {stepNumber === 1 && "Setup & Select"}
@@ -1800,7 +1929,7 @@ const BulkEmailCampaign = () => {
                 {stepNumber === 3 && "Review & Send"}
               </div>
               {stepNumber < 3 && (
-                <div className="ml-4 h-0.5 w-12 bg-gray-300"></div>
+                <div className={`ml-4 h-0.5 w-12 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-300'}`}></div>
               )}
             </div>
           ))}
@@ -1810,15 +1939,15 @@ const BulkEmailCampaign = () => {
       {/* Step Content */}
       {renderStepContent()}
 
-      {/* Navigation Buttons */}
-      <div className="flex justify-between pt-6 border-t border-gray-200">
+      {/* Navigation Buttons - Dark mode aware */}
+      <div className={`flex justify-between pt-6 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
         <div>
           {step > 1 && (
             <Button
               onClick={handlePrevStep}
               variant="outline"
               icon="fas fa-arrow-left"
-              className="border-gray-300"
+              className={isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300'}
             >
               Previous
             </Button>
@@ -1835,12 +1964,12 @@ const BulkEmailCampaign = () => {
                     <head>
                       <title>Email Preview</title>
                       <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
-                        .preview-container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-                        h2 { color: #333; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; }
-                        .email-body { border: 1px solid #ddd; padding: 20px; margin: 20px 0; white-space: pre-line; line-height: 1.6; }
+                        body { font-family: Arial, sans-serif; padding: 20px; background: ${isDarkMode ? '#1f2937' : '#f5f5f5'}; }
+                        .preview-container { max-width: 600px; margin: 0 auto; background: ${isDarkMode ? '#374151' : 'white'}; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                        h2 { color: ${isDarkMode ? '#e5e7eb' : '#333'}; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; }
+                        .email-body { border: 1px solid ${isDarkMode ? '#4b5563' : '#ddd'}; padding: 20px; margin: 20px 0; white-space: pre-line; line-height: 1.6; color: ${isDarkMode ? '#e5e7eb' : '#333'}; }
                         .placeholder { background: #f0f9ff; color: #0369a1; padding: 2px 5px; border-radius: 3px; }
-                        .footer { color: #666; font-size: 12px; margin-top: 20px; padding-top: 10px; border-top: 1px solid #eee; }
+                        .footer { color: ${isDarkMode ? '#9ca3af' : '#666'}; font-size: 12px; margin-top: 20px; padding-top: 10px; border-top: 1px solid ${isDarkMode ? '#4b5563' : '#eee'}; }
                       </style>
                     </head>
                     <body>
@@ -1862,7 +1991,10 @@ const BulkEmailCampaign = () => {
               }}
               variant="outline"
               icon="fas fa-eye"
-              className="border-yellow-400 text-yellow-600 hover:bg-yellow-50"
+              className={isDarkMode 
+                ? 'border-yellow-700 text-yellow-400 hover:bg-yellow-900/20' 
+                : 'border-yellow-400 text-yellow-600 hover:bg-yellow-50'
+              }
             >
               Preview Email
             </Button>
@@ -1891,7 +2023,7 @@ const BulkEmailCampaign = () => {
         </div>
       </div>
 
-      {/* Student Form Modal */}
+      {/* Student Form Modal - already has dark mode */}
       {showStudentForm && (
         <StudentForm
           onSubmit={(data) => handleUpdateStudent(editingStudent._id, data)}
@@ -1906,13 +2038,15 @@ const BulkEmailCampaign = () => {
         />
       )}
 
-      {/* Add Email Configuration Modal */}
+      {/* Add Email Configuration Modal - Dark mode aware */}
       {showEmailForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+        <div className={`fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4`}>
+          <div className={`rounded-lg shadow-xl max-w-md w-full ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">
+                <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                   Add Email Configuration
                 </h3>
                 <button
@@ -1925,7 +2059,7 @@ const BulkEmailCampaign = () => {
                     });
                     setShowAppPassword(false);
                   }}
-                  className="text-gray-400 hover:text-gray-600"
+                  className={isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}
                 >
                   <i className="fas fa-times"></i>
                 </button>
@@ -1936,21 +2070,11 @@ const BulkEmailCampaign = () => {
                 className="space-y-4"
                 autoComplete="off"
               >
-                {/* Hidden fields to prevent Chrome autofill */}
-                <input
-                  type="text"
-                  name="fakeuser"
-                  style={{ display: "none" }}
-                />
-                <input
-                  type="password"
-                  name="fakepass"
-                  style={{ display: "none" }}
-                />
+                <input type="text" name="fakeuser" style={{ display: "none" }} />
+                <input type="password" name="fakepass" style={{ display: "none" }} />
 
-                {/* Email Address */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Email Address *
                   </label>
                   <input
@@ -1960,14 +2084,17 @@ const BulkEmailCampaign = () => {
                     value={emailFormData.email}
                     onChange={handleEmailFormChange}
                     placeholder="your-email@gmail.com"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                    }`}
                     required
                   />
                 </div>
 
-                {/* App Password - Auto removes spaces */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     App Password *
                   </label>
 
@@ -1978,7 +2105,6 @@ const BulkEmailCampaign = () => {
                       autoComplete="new-password"
                       value={emailFormData.appPassword}
                       onChange={(e) => {
-                        // Remove all spaces from input
                         const noSpaces = e.target.value.replace(/\s/g, "");
                         handleEmailFormChange({
                           target: {
@@ -1988,7 +2114,6 @@ const BulkEmailCampaign = () => {
                         });
                       }}
                       onPaste={(e) => {
-                        // Remove spaces from pasted content
                         e.preventDefault();
                         const pastedText = e.clipboardData.getData("text");
                         const noSpaces = pastedText.replace(/\s/g, "");
@@ -2000,40 +2125,43 @@ const BulkEmailCampaign = () => {
                         });
                       }}
                       placeholder="Enter 16-character app password"
-                      className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={`w-full rounded-lg border px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        isDarkMode 
+                          ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                          : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                      }`}
                       required
                     />
 
-                    {/* Eye Toggle */}
                     <button
                       type="button"
                       onClick={() => setShowAppPassword(!showAppPassword)}
-                      className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
+                      className={`absolute inset-y-0 right-0 px-3 flex items-center ${
+                        isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+                      }`}
                     >
-                      <i
-                        className={`fas ${
-                          showAppPassword ? "fa-eye-slash" : "fa-eye"
-                        }`}
-                      ></i>
+                      <i className={`fas ${showAppPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
                     </button>
                   </div>
 
-                  <p className="text-xs text-gray-500 mt-2">
-                    Enter your 16-character app password (spaces will be removed
-                    automatically)
+                  <p className={`text-xs mt-2 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    Enter your 16-character app password (spaces will be removed automatically)
                   </p>
                 </div>
 
-                {/* Email Provider */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Email Provider
                   </label>
                   <select
                     name="provider"
                     value={emailFormData.provider}
                     onChange={handleEmailFormChange}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-white border-gray-300 text-gray-900'
+                    }`}
                   >
                     <option value="gmail">Gmail</option>
                     <option value="outlook">Outlook</option>
@@ -2042,8 +2170,7 @@ const BulkEmailCampaign = () => {
                   </select>
                 </div>
 
-                {/* Buttons */}
-                <div className="pt-4 border-t border-gray-200">
+                <div className={`pt-4 border-t ${isDarkMode ? 'border-gray-700' : 'border-gray-200'}`}>
                   <div className="flex justify-end gap-3">
                     <Button
                       type="button"
@@ -2057,7 +2184,7 @@ const BulkEmailCampaign = () => {
                         setShowAppPassword(false);
                       }}
                       variant="outline"
-                      className="border-gray-300"
+                      className={isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : 'border-gray-300'}
                     >
                       Cancel
                     </Button>
@@ -2073,16 +2200,6 @@ const BulkEmailCampaign = () => {
       )}
     </div>
   );
-};
-
-// Helper function for certificate type display (used in preview)
-const getCertificateTypeDisplay = (type) => {
-  if (type === "COURSE_CERTIFICATE") {
-    return "Course Completion Certificate";
-  } else if (type === "INTERNSHIP_CERTIFICATE") {
-    return "Internship Certificate";
-  }
-  return "Certificate";
 };
 
 export default BulkEmailCampaign;

@@ -1,3 +1,4 @@
+// src/modules/courses/CoursesList.jsx
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { courseAPI } from '../../api/courses';
@@ -10,11 +11,13 @@ import CourseCard from './CourseCard';
 import CoursesTable from './CoursesTable';
 import CourseForm from './CourseForm';
 import { useToast } from '../../hooks/useToast';
+import { useTheme } from '../../context/ThemeContext';
 
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 const CoursesList = () => {
+  const { isDarkMode } = useTheme();
   const [courses, setCourses] = useState([]);
   const [batches, setBatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -136,9 +139,7 @@ const CoursesList = () => {
               ...course,
               studentCount,
               batchCount,
-              // Ensure course name exists
               courseName: course.courseName || 'Unnamed Course',
-              // Ensure course code exists
               courseCode: course.courseCode || course.courseName?.substring(0, 8).toUpperCase() || 'N/A'
             };
           });
@@ -185,13 +186,13 @@ const CoursesList = () => {
 
       // Add header
       doc.setFontSize(20);
-      doc.setTextColor(40, 40, 40);
+      doc.setTextColor(isDarkMode ? 200 : 40, isDarkMode ? 200 : 40, isDarkMode ? 200 : 40);
       doc.setFont('helvetica', 'bold');
       doc.text('COURSES LIST', 14, 20);
 
       // Add subtitle
       doc.setFontSize(12);
-      doc.setTextColor(100, 100, 100);
+      doc.setTextColor(isDarkMode ? 150 : 100, isDarkMode ? 150 : 100, isDarkMode ? 150 : 100);
       doc.setFont('helvetica', 'normal');
       if (selectedBatch) {
         doc.text(`Batch: ${selectedBatch.batchName}`, 14, 28);
@@ -248,7 +249,7 @@ const CoursesList = () => {
           fontStyle: 'bold',
         },
         alternateRowStyles: {
-          fillColor: [245, 245, 245]
+          fillColor: isDarkMode ? [60, 60, 60] : [245, 245, 245]
         },
         columnStyles: {
           0: { cellWidth: 10 }, // #
@@ -267,10 +268,12 @@ const CoursesList = () => {
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
+      doc.setTextColor(isDarkMode ? 200 : 40, isDarkMode ? 200 : 40, isDarkMode ? 200 : 40);
       doc.text('SUMMARY STATISTICS', 14, finalY);
       
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
+      doc.setTextColor(isDarkMode ? 150 : 100, isDarkMode ? 150 : 100, isDarkMode ? 150 : 100);
       doc.text([
         `Total Courses: ${stats.totalCourses}`,
         `Active Courses: ${stats.activeCourses}`,
@@ -417,22 +420,30 @@ const CoursesList = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
             {selectedBatch ? `${selectedBatch.batchName} Courses` : 'Courses Management'}
           </h1>
-          <p className="text-gray-600">
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
             {selectedBatch ? 'Manage courses for this batch' : 'Manage all courses and their enrollments'}
           </p>
           
           {selectedBatch && (
             <div className="mt-2 flex items-center gap-2">
-              <span className="inline-flex items-center text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+              <span className={`inline-flex items-center text-sm px-3 py-1 rounded-full border ${
+                isDarkMode 
+                  ? 'text-blue-300 bg-blue-900/20 border-blue-800' 
+                  : 'text-blue-600 bg-blue-50 border-blue-200'
+              }`}>
                 <i className="fas fa-filter mr-1"></i>
                 Filtered by Batch: {selectedBatch.batchName}
               </span>
               <button
                 onClick={clearBatchFilter}
-                className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2 py-1 rounded transition-colors"
+                className={`inline-flex items-center text-sm px-2 py-1 rounded transition-colors ${
+                  isDarkMode 
+                    ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                }`}
                 title="Show all courses"
               >
                 <i className="fas fa-times mr-1"></i>
@@ -445,13 +456,21 @@ const CoursesList = () => {
         <div className="flex items-center gap-3">
           {/* View Mode Toggle - only show if we have courses */}
           {courses.length > 0 && (
-            <div className="flex bg-white rounded-lg border border-gray-200 p-1 shadow-sm">
+            <div className={`flex rounded-lg border p-1 shadow-sm ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'
+            }`}>
               <button
                 onClick={() => setViewMode('table')}
                 className={`p-2.5 rounded-md transition-all duration-300 flex items-center gap-2 ${
                   viewMode === 'table'
-                    ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                    ? isDarkMode
+                      ? 'bg-gradient-to-r from-blue-900/30 to-indigo-900/30 text-blue-300 border border-blue-800 shadow-sm'
+                      : 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm'
+                    : isDarkMode
+                      ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                 }`}
                 title="Table View"
               >
@@ -463,8 +482,12 @@ const CoursesList = () => {
                 onClick={() => setViewMode('card')}
                 className={`p-2.5 rounded-md transition-all duration-300 flex items-center gap-2 ${
                   viewMode === 'card'
-                    ? 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm'
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                    ? isDarkMode
+                      ? 'bg-gradient-to-r from-blue-900/30 to-indigo-900/30 text-blue-300 border border-blue-800 shadow-sm'
+                      : 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm'
+                    : isDarkMode
+                      ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                 }`}
                 title="Card View"
               >
@@ -482,7 +505,10 @@ const CoursesList = () => {
               icon={isGeneratingPDF ? "fas fa-spinner fa-spin" : "fas fa-download"}
               size="medium"
               disabled={filteredCourses.length === 0 || isGeneratingPDF}
-              className="bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200 hover:from-emerald-100 hover:to-emerald-200 text-emerald-700 hover:text-emerald-800 hover:border-emerald-300"
+              className={isDarkMode
+                ? 'bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-200 hover:text-white'
+                : 'bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200 hover:from-emerald-100 hover:to-emerald-200 text-emerald-700 hover:text-emerald-800 hover:border-emerald-300'
+              }
             >
               {isGeneratingPDF ? 'Generating...' : 'Download PDF'}
             </Button>
@@ -509,73 +535,95 @@ const CoursesList = () => {
       </div>
 
       {/* Statistics Cards - only show if we have courses */}
-      {/* {courses.length > 0 && (
+      {courses.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-white to-blue-50 p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+          <div className={`p-5 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 ${
+            isDarkMode 
+              ? 'bg-gradient-to-br from-gray-800 to-gray-750 border-gray-700' 
+              : 'bg-gradient-to-br from-white to-blue-50 border-gray-200'
+          }`}>
             <div className="flex items-center">
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 shadow-sm">
                 <i className="fas fa-book text-white text-xl"></i>
               </div>
               <div>
-                <p className="text-sm text-gray-600 font-medium">Total Courses</p>
-                <p className="text-2xl font-bold text-gray-800">
+                <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Total Courses</p>
+                <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                   {stats.totalCourses}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-white to-emerald-50 p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+          <div className={`p-5 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 ${
+            isDarkMode 
+              ? 'bg-gradient-to-br from-gray-800 to-gray-750 border-gray-700' 
+              : 'bg-gradient-to-br from-white to-emerald-50 border-gray-200'
+          }`}>
             <div className="flex items-center">
               <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4 shadow-sm">
                 <i className="fas fa-check-circle text-white text-xl"></i>
               </div>
               <div>
-                <p className="text-sm text-gray-600 font-medium">Active</p>
-                <p className="text-2xl font-bold text-gray-800">
+                <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Active</p>
+                <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                   {stats.activeCourses}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-white to-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+          <div className={`p-5 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 ${
+            isDarkMode 
+              ? 'bg-gradient-to-br from-gray-800 to-gray-750 border-gray-700' 
+              : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'
+          }`}>
             <div className="flex items-center">
               <div className="w-12 h-12 bg-gradient-to-r from-gray-500 to-gray-600 rounded-xl flex items-center justify-center mr-4 shadow-sm">
                 <i className="fas fa-pause-circle text-white text-xl"></i>
               </div>
               <div>
-                <p className="text-sm text-gray-600 font-medium">Inactive</p>
-                <p className="text-2xl font-bold text-gray-800">
+                <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Inactive</p>
+                <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                   {stats.inactiveCourses}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-white to-purple-50 p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+          <div className={`p-5 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 ${
+            isDarkMode 
+              ? 'bg-gradient-to-br from-gray-800 to-gray-750 border-gray-700' 
+              : 'bg-gradient-to-br from-white to-purple-50 border-gray-200'
+          }`}>
             <div className="flex items-center">
               <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-4 shadow-sm">
                 <i className="fas fa-users text-white text-xl"></i>
               </div>
               <div>
-                <p className="text-sm text-gray-600 font-medium">Total Students</p>
-                <p className="text-2xl font-bold text-gray-800">
+                <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Total Students</p>
+                <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                   {stats.totalStudents}
                 </p>
               </div>
             </div>
           </div>
         </div>
-      )} */}
+      )}
 
       {/* Search and Filters - only show if we have batches */}
       {batches.length > 0 && (
-        <div className="bg-gradient-to-br from-white to-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+        <div className={`p-5 rounded-xl border shadow-sm ${
+          isDarkMode 
+            ? 'bg-gradient-to-br from-gray-800 to-gray-750 border-gray-700' 
+            : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'
+        }`}>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Search */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Search Courses
               </label>
               <div className="relative group">
@@ -584,15 +632,23 @@ const CoursesList = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by course name or code..."
-                  className="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white/80 transition-all duration-300 hover:border-blue-400"
+                  className={`
+                    block w-full rounded-xl border-2 px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300
+                    ${isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                      : 'bg-white/80 border-gray-300 text-gray-900 placeholder-gray-500'
+                    }
+                  `}
                 />
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <i className="fas fa-search text-gray-400"></i>
+                  <i className={`fas fa-search ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
                 </div>
                 {searchTerm && (
                   <button
                     onClick={() => setSearchTerm('')}
-                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                    className={`absolute inset-y-0 right-0 pr-4 flex items-center transition-colors ${
+                      isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'
+                    }`}
                   >
                     <i className="fas fa-times"></i>
                   </button>
@@ -602,7 +658,9 @@ const CoursesList = () => {
 
             {/* Batch Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Filter by Batch
               </label>
               <div className="relative">
@@ -613,7 +671,13 @@ const CoursesList = () => {
                     const selected = batches.find(b => b._id === e.target.value);
                     setSelectedBatch(selected || null);
                   }}
-                  className="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white/80 transition-all duration-300 hover:border-blue-400"
+                  className={`
+                    block w-full rounded-xl border-2 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300
+                    ${isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white/80 border-gray-300 text-gray-900'
+                    }
+                  `}
                 >
                   <option value="all">All Batches</option>
                   {batches.map((batch) => (
@@ -623,28 +687,36 @@ const CoursesList = () => {
                   ))}
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <i className="fas fa-chevron-down text-gray-400"></i>
+                  <i className={`fas fa-chevron-down ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
                 </div>
               </div>
             </div>
 
             {/* Status Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={`block text-sm font-medium mb-2 ${
+                isDarkMode ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 Filter by Status
               </label>
               <div className="relative">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white/80 transition-all duration-300 hover:border-blue-400"
+                  className={`
+                    block w-full rounded-xl border-2 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300
+                    ${isDarkMode 
+                      ? 'bg-gray-700 border-gray-600 text-white' 
+                      : 'bg-white/80 border-gray-300 text-gray-900'
+                    }
+                  `}
                 >
                   <option value="all">All Status</option>
                   <option value="active">Active Only</option>
                   <option value="inactive">Inactive Only</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                  <i className="fas fa-chevron-down text-gray-400"></i>
+                  <i className={`fas fa-chevron-down ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
                 </div>
               </div>
             </div>
@@ -652,30 +724,38 @@ const CoursesList = () => {
           
           {/* Active batch filter notification */}
           {selectedBatch && (
-            <div className="mt-4 p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg border border-emerald-200">
+            <div className={`mt-4 p-3 rounded-lg border ${
+              isDarkMode 
+                ? 'bg-gradient-to-r from-emerald-900/20 to-teal-900/20 border-emerald-800' 
+                : 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200'
+            }`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
                     <i className="fas fa-layer-group text-white"></i>
                   </div>
                   <div>
-                    <p className="font-medium text-gray-800">
+                    <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                       Showing courses for batch:{" "}
-                      <span className="text-emerald-600">
+                      <span className="text-emerald-600 dark:text-emerald-400">
                         {selectedBatch.batchName}
                       </span>
                     </p>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                       Only courses from this batch are displayed
                     </p>
-                    <p className="text-sm text-gray-500 mt-1">
+                    <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                       Click "Download PDF" to export this filtered list
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={clearBatchFilter}
-                  className="px-4 py-2 text-sm font-medium text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100 rounded-lg transition-colors"
+                  className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    isDarkMode 
+                      ? 'text-emerald-300 hover:text-emerald-200 hover:bg-emerald-900/30' 
+                      : 'text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100'
+                  }`}
                 >
                   <i className="fas fa-times mr-1"></i>
                   Clear Batch Filter

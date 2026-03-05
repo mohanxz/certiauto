@@ -18,13 +18,25 @@ export const login = async (req: Request, res: Response) => {
 
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    return sendResponse(
+      res,
+      400,
+      false,
+      null,
+      "Email and password are required",
+    );
+  }
+
   try {
+    // Find user
     const user = await userService.findUserByEmail(email);
 
     if (!user) {
       return sendResponse(res, 401, false, null, "Invalid email or password");
     }
 
+    // Validate password
     const isPasswordValid = await userService.validatePassword(
       password,
       user.password,
@@ -34,11 +46,25 @@ export const login = async (req: Request, res: Response) => {
       return sendResponse(res, 401, false, null, "Invalid email or password");
     }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET as string, {
-      expiresIn: "1h",
-    });
+    // Check JWT Secret
+    const secret = process.env.JWT_SECRET;
 
-    sendResponse(res, 200, true, {
+    if (!secret) {
+      console.error("JWT_SECRET is missing in environment variables");
+      return sendResponse(
+        res,
+        500,
+        false,
+        null,
+        "Server configuration error: JWT secret missing",
+      );
+    }
+
+    // Generate Token
+    const token = jwt.sign({ id: user._id }, secret, { expiresIn: "1h" });
+
+    // Send response
+    return sendResponse(res, 200, true, {
       _id: user._id,
       name: user.name,
       age: user.age,
@@ -47,6 +73,7 @@ export const login = async (req: Request, res: Response) => {
       token,
     });
   } catch (error) {
-    sendResponse(res, 500, false, null, (error as Error).message);
+    console.error("Login Error:", error);
+    return sendResponse(res, 500, false, null, (error as Error).message);
   }
 };

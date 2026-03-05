@@ -1,11 +1,14 @@
+// src/modules/emailConfig/EmailConfigList.jsx
 import React, { useState, useEffect } from "react";
 import Button from "../../components/ui/Button";
 import { useToast } from "../../hooks/useToast";
 import LoadingSkeleton from "../../components/common/LoadingSkeleton";
 import EmailConfigTable from "./EmailConfigTable";
 import EmptyState from "../../components/common/EmptyState";
+import { useTheme } from "../../context/ThemeContext";
 
 const EmailConfigList = () => {
+    const { isDarkMode } = useTheme();
     const [emailConfigs, setEmailConfigs] = useState([]);
     const [loading, setLoading] = useState(false);
     const [showEmailForm, setShowEmailForm] = useState(false);
@@ -28,6 +31,8 @@ const EmailConfigList = () => {
         limit: 10,
         total: 0,
         totalPages: 1,
+        hasPrevious: false,
+        hasNext: false,
     });
 
     const { showToast } = useToast();
@@ -62,7 +67,12 @@ const EmailConfigList = () => {
             if (data.success) {
                 setEmailConfigs(data.data);
                 if (data.pagination) {
-                    setPagination(prev => ({ ...prev, ...data.pagination }));
+                    setPagination(prev => ({ 
+                        ...prev, 
+                        ...data.pagination,
+                        hasPrevious: data.pagination.page > 1,
+                        hasNext: data.pagination.page < data.pagination.totalPages
+                    }));
                 }
             }
         } catch (error) {
@@ -82,7 +92,6 @@ const EmailConfigList = () => {
     };
 
     const handlePasswordChange = (e) => {
-        // Remove all spaces from password
         const noSpaces = e.target.value.replace(/\s/g, '');
         setEmailFormData(prev => ({
             ...prev,
@@ -294,13 +303,19 @@ const EmailConfigList = () => {
     };
 
     return (
-        <div className="space-y-6">
+        <div className={`space-y-6 min-h-screen ${isDarkMode ? 'bg-gray-900' : ''}`}>
             {/* Clean Header */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
+            <div className={`border rounded-lg p-6 ${
+                isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            }`}>
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">Email Configuration</h1>
-                        <p className="text-gray-600 mt-1">Manage sender email accounts</p>
+                        <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                            Email Configuration
+                        </h1>
+                        <p className={`mt-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                            Manage sender email accounts
+                        </p>
                     </div>
                     <Button
                         onClick={() => setShowEmailForm(true)}
@@ -313,10 +328,14 @@ const EmailConfigList = () => {
             </div>
 
             {/* Search and Filters */}
-            <div className="bg-white border border-gray-200 rounded-lg p-5">
+            <div className={`border rounded-lg p-5 ${
+                isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            }`}>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className={`block text-sm font-medium mb-2 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
                             Search Emails
                         </label>
                         <div className="relative">
@@ -325,13 +344,17 @@ const EmailConfigList = () => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Search by email or provider..."
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 pl-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                className={`w-full rounded-lg border px-4 py-2.5 pl-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+                                    isDarkMode 
+                                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                                }`}
                             />
-                            <i className="fas fa-search absolute left-3 top-3.5 text-gray-400"></i>
+                            <i className={`fas fa-search absolute left-3 top-3.5 ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
                             {searchTerm && (
                                 <button
                                     onClick={() => setSearchTerm('')}
-                                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                                    className={`absolute right-3 top-3 ${isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}`}
                                 >
                                     <i className="fas fa-times"></i>
                                 </button>
@@ -340,13 +363,19 @@ const EmailConfigList = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className={`block text-sm font-medium mb-2 ${
+                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                        }`}>
                             Filter by Status
                         </label>
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                            className={`w-full rounded-lg border px-4 py-2.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+                                isDarkMode 
+                                    ? 'bg-gray-700 border-gray-600 text-white' 
+                                    : 'bg-white border-gray-300 text-gray-900'
+                            }`}
                         >
                             <option value="all">All Status</option>
                             <option value="active">Active</option>
@@ -359,7 +388,7 @@ const EmailConfigList = () => {
                             onClick={loadEmailConfigs}
                             variant="outline"
                             icon="fas fa-sync-alt"
-                            className="flex-1"
+                            className={`flex-1 ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : ''}`}
                         >
                             Refresh
                         </Button>
@@ -380,7 +409,9 @@ const EmailConfigList = () => {
             {loading ? (
                 <div className="space-y-3">
                     {[...Array(5)].map((_, i) => (
-                        <div key={i} className="bg-gray-100 animate-pulse rounded-lg p-6 h-20"></div>
+                        <div key={i} className={`animate-pulse rounded-lg p-6 h-20 ${
+                            isDarkMode ? 'bg-gray-800' : 'bg-gray-100'
+                        }`}></div>
                     ))}
                 </div>
             ) : emailConfigs.length === 0 ? (
@@ -407,10 +438,12 @@ const EmailConfigList = () => {
                     />
 
                     {/* Pagination */}
-                    <div className="bg-white border border-gray-200 rounded-lg px-4 py-3">
+                    <div className={`border rounded-lg px-4 py-3 ${
+                        isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+                    }`}>
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm text-gray-700">
+                                <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                                     Showing <span className="font-medium">{(pagination.page - 1) * pagination.limit + 1}</span> to <span className="font-medium">{Math.min(pagination.page * pagination.limit, pagination.total)}</span> of <span className="font-medium">{pagination.total}</span> results
                                 </p>
                             </div>
@@ -418,19 +451,35 @@ const EmailConfigList = () => {
                                 <button
                                     onClick={() => setPagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
                                     disabled={!pagination.hasPrevious}
-                                    className={`px-3 py-1.5 rounded border ${!pagination.hasPrevious ? 'bg-gray-100 text-gray-400 border-gray-300' : 'border-gray-300 hover:bg-gray-50'}`}
+                                    className={`px-3 py-1.5 rounded border ${
+                                        !pagination.hasPrevious
+                                            ? isDarkMode
+                                                ? 'bg-gray-700 text-gray-500 border-gray-600'
+                                                : 'bg-gray-100 text-gray-400 border-gray-300'
+                                            : isDarkMode
+                                                ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                                                : 'border-gray-300 hover:bg-gray-50'
+                                    }`}
                                 >
                                     <i className="fas fa-chevron-left"></i>
                                 </button>
                                 
-                                <span className="px-3 py-1.5 text-sm font-medium text-gray-700">
+                                <span className={`px-3 py-1.5 text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                                     Page {pagination.page} of {pagination.totalPages}
                                 </span>
                                 
                                 <button
                                     onClick={() => setPagination(prev => ({ ...prev, page: Math.min(pagination.totalPages, prev.page + 1) }))}
                                     disabled={!pagination.hasNext}
-                                    className={`px-3 py-1.5 rounded border ${!pagination.hasNext ? 'bg-gray-100 text-gray-400 border-gray-300' : 'border-gray-300 hover:bg-gray-50'}`}
+                                    className={`px-3 py-1.5 rounded border ${
+                                        !pagination.hasNext
+                                            ? isDarkMode
+                                                ? 'bg-gray-700 text-gray-500 border-gray-600'
+                                                : 'bg-gray-100 text-gray-400 border-gray-300'
+                                            : isDarkMode
+                                                ? 'border-gray-600 text-gray-300 hover:bg-gray-700'
+                                                : 'border-gray-300 hover:bg-gray-50'
+                                    }`}
                                 >
                                     <i className="fas fa-chevron-right"></i>
                                 </button>
@@ -444,17 +493,21 @@ const EmailConfigList = () => {
             {showEmailForm && (
                 <div className="fixed inset-0 z-50 overflow-y-auto">
                     <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
-                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75" onClick={handleCloseForm}></div>
+                        <div className={`fixed inset-0 transition-opacity ${
+                            isDarkMode ? 'bg-gray-900/90' : 'bg-gray-500 bg-opacity-75'
+                        }`} onClick={handleCloseForm}></div>
 
-                        <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full">
-                            <div className="bg-white px-6 pt-6 pb-4">
+                        <div className={`inline-block align-bottom rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full ${
+                            isDarkMode ? 'bg-gray-800' : 'bg-white'
+                        }`}>
+                            <div className={`px-6 pt-6 pb-4 ${isDarkMode ? 'bg-gray-800' : 'bg-white'}`}>
                                 <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-lg font-semibold text-gray-900">
+                                    <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                         {editingId ? 'Edit Email Account' : 'Add New Email Account'}
                                     </h3>
                                     <button
                                         onClick={handleCloseForm}
-                                        className="text-gray-400 hover:text-gray-600"
+                                        className={isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'}
                                     >
                                         <i className="fas fa-times"></i>
                                     </button>
@@ -466,7 +519,9 @@ const EmailConfigList = () => {
                                     <input type="password" name="fakepass" style={{ display: 'none' }} />
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label className={`block text-sm font-medium mb-1 ${
+                                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                        }`}>
                                             Email Address
                                         </label>
                                         <input
@@ -475,14 +530,20 @@ const EmailConfigList = () => {
                                             autoComplete="off"
                                             value={emailFormData.email}
                                             onChange={handleEmailFormChange}
-                                            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                            className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+                                                isDarkMode 
+                                                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                                                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                                            }`}
                                             placeholder="sender@example.com"
                                             required
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label className={`block text-sm font-medium mb-1 ${
+                                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                        }`}>
                                             App Password
                                         </label>
                                         <div className="relative">
@@ -493,32 +554,44 @@ const EmailConfigList = () => {
                                                 value={emailFormData.appPassword}
                                                 onChange={handlePasswordChange}
                                                 onPaste={handlePasswordPaste}
-                                                className="w-full rounded-lg border border-gray-300 px-3 py-2 pr-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                                className={`w-full rounded-lg border px-3 py-2 pr-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+                                                    isDarkMode 
+                                                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                                                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                                                }`}
                                                 placeholder="Enter app password (spaces removed)"
                                                 required
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700"
+                                                className={`absolute inset-y-0 right-0 px-3 flex items-center ${
+                                                    isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+                                                }`}
                                             >
                                                 <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
                                             </button>
                                         </div>
-                                        <p className="mt-1 text-xs text-gray-500">
+                                        <p className={`mt-1 text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                             Spaces are automatically removed
                                         </p>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        <label className={`block text-sm font-medium mb-1 ${
+                                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                        }`}>
                                             Provider
                                         </label>
                                         <select
                                             name="provider"
                                             value={emailFormData.provider}
                                             onChange={handleEmailFormChange}
-                                            className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                            className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+                                                isDarkMode 
+                                                    ? 'bg-gray-700 border-gray-600 text-white' 
+                                                    : 'bg-white border-gray-300 text-gray-900'
+                                            }`}
                                         >
                                             <option value="gmail">Gmail</option>
                                             <option value="outlook">Outlook</option>
@@ -530,7 +603,9 @@ const EmailConfigList = () => {
                                     {emailFormData.provider === "custom" && (
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                <label className={`block text-sm font-medium mb-1 ${
+                                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                                }`}>
                                                     Host
                                                 </label>
                                                 <input
@@ -538,13 +613,19 @@ const EmailConfigList = () => {
                                                     name="host"
                                                     value={emailFormData.host}
                                                     onChange={handleEmailFormChange}
-                                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                                    className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+                                                        isDarkMode 
+                                                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                                                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                                                    }`}
                                                     placeholder="smtp.example.com"
                                                     required
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                <label className={`block text-sm font-medium mb-1 ${
+                                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                                }`}>
                                                     Port
                                                 </label>
                                                 <input
@@ -552,7 +633,11 @@ const EmailConfigList = () => {
                                                     name="port"
                                                     value={emailFormData.port}
                                                     onChange={handleEmailFormChange}
-                                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                                    className={`w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+                                                        isDarkMode 
+                                                            ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                                                            : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                                                    }`}
                                                     placeholder="587"
                                                     required
                                                 />
@@ -569,7 +654,7 @@ const EmailConfigList = () => {
                                             onChange={(e) => setEmailFormData(prev => ({ ...prev, isActive: e.target.checked }))}
                                             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                         />
-                                        <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+                                        <label htmlFor="isActive" className={`ml-2 block text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-900'}`}>
                                             Set as active email
                                         </label>
                                     </div>
@@ -586,6 +671,7 @@ const EmailConfigList = () => {
                                             type="button"
                                             onClick={handleCloseForm}
                                             variant="outline"
+                                            className={isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : ''}
                                         >
                                             Cancel
                                         </Button>

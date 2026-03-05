@@ -1,10 +1,13 @@
+// src/components/bulk-email/CertificateTemplateSelector.jsx
 import React, { useState, useEffect } from "react";
 import Button from "../../components/ui/Button";
 import { certificateTemplatesAPI } from "../../api/certificateTemplates";
 import { useToast } from "../../hooks/useToast";
 import LoadingSkeleton from "../../components/common/LoadingSkeleton";
+import { useTheme } from "../../context/ThemeContext";
 
 const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
+  const { isDarkMode } = useTheme();
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -14,7 +17,6 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
   const [templateDescription, setTemplateDescription] = useState("");
   const { showToast } = useToast();
 
-  /* ===================== LOAD TEMPLATES ===================== */
   useEffect(() => {
     loadTemplates();
   }, []);
@@ -25,7 +27,6 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
 
       const response = await certificateTemplatesAPI.getAllTemplates();
 
-      //  CORRECT BACKEND STRUCTURE
       if (response?.success && Array.isArray(response.data)) {
         setTemplates(response.data);
       } else {
@@ -41,7 +42,6 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
     }
   };
 
-  /* ===================== TEMPLATE SELECTION ===================== */
   const handleTemplateSelect = (e) => {
     const templateId = e.target.value || null;
     onSelect?.(templateId);
@@ -49,7 +49,6 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
 
   const selectedTemplate = templates.find((t) => t._id === selectedTemplateId);
 
-  /* ===================== FILE HANDLING ===================== */
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -72,7 +71,6 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
     setUploadFile(file);
   };
 
-  /* ===================== UPLOAD ===================== */
   const handleUpload = async () => {
     if (!uploadFile || !templateName.trim()) {
       showToast("Template name and file are required", "error");
@@ -107,7 +105,6 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
     }
   };
 
-  /* ===================== DELETE ===================== */
   const handleDeleteTemplate = async (templateId) => {
     if (!window.confirm("Delete this certificate template?")) return;
 
@@ -129,7 +126,6 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
     }
   };
 
-  /* ===================== HELPERS ===================== */
   const resetUploadForm = () => {
     setUploadFile(null);
     setTemplateName("");
@@ -144,24 +140,28 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
     return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
   };
 
-  /* ===================== LOADING ===================== */
   if (loading) {
     return <LoadingSkeleton type="card" count={2} />;
   }
 
-  /* ===================== UI ===================== */
   return (
     <div className="space-y-4">
       {/* SELECT */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className={`block text-sm font-medium mb-1 ${
+          isDarkMode ? 'text-gray-300' : 'text-gray-700'
+        }`}>
           Certificate Template *
         </label>
         <div className="flex gap-2">
           <select
             value={selectedTemplateId || ""}
             onChange={handleTemplateSelect}
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-purple-500"
+            className={`flex-1 rounded-lg border px-3 py-2 focus:ring-2 focus:ring-purple-500 ${
+              isDarkMode 
+                ? 'bg-gray-700 border-gray-600 text-white' 
+                : 'bg-white border-gray-300 text-gray-900'
+            }`}
           >
             <option value="">-- Select template --</option>
             {templates.map((t) => (
@@ -176,6 +176,10 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
             variant="outline"
             size="small"
             icon="fas fa-sync"
+            className={isDarkMode 
+              ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+              : ''
+            }
           >
             Refresh
           </Button>
@@ -184,20 +188,30 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
 
       {/* SELECTED TEMPLATE INFO */}
       {selectedTemplate && (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+        <div className={`rounded-lg border p-4 ${
+          isDarkMode 
+            ? 'bg-purple-900/20 border-purple-800' 
+            : 'bg-purple-50 border-purple-200'
+        }`}>
           <div className="flex justify-between items-start">
             <div>
-              <div className="font-medium text-purple-800">
+              <div className={`font-medium ${
+                isDarkMode ? 'text-purple-300' : 'text-purple-800'
+              }`}>
                 {selectedTemplate.originalName || selectedTemplate.name}
               </div>
-              <div className="text-xs text-purple-600 mt-1">
+              <div className={`text-xs mt-1 ${
+                isDarkMode ? 'text-purple-400' : 'text-purple-600'
+              }`}>
                 {formatFileSize(selectedTemplate.fileSize)}
               </div>
             </div>
 
             <button
               onClick={() => handleDeleteTemplate(selectedTemplate._id)}
-              className="text-red-500 hover:text-red-700"
+              className={`hover:text-red-700 transition-colors ${
+                isDarkMode ? 'text-red-400' : 'text-red-500'
+              }`}
               title="Delete template"
             >
               <i className="fas fa-trash-alt"></i>
@@ -211,7 +225,7 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
         onClick={() => setShowUploadModal(true)}
         variant="outline"
         icon="fas fa-upload"
-        className="w-full"
+        className={`w-full ${isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : ''}`}
       >
         Upload Certificate Template
       </Button>
@@ -219,8 +233,12 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
       {/* MODAL */}
       {showUploadModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">
+          <div className={`rounded-lg p-6 w-full max-w-md ${
+            isDarkMode ? 'bg-gray-800' : 'bg-white'
+          }`}>
+            <h3 className={`text-lg font-semibold mb-4 ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}>
               Upload Certificate Template
             </h3>
 
@@ -230,21 +248,30 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
                 placeholder="Template Name *"
                 value={templateName}
                 onChange={(e) => setTemplateName(e.target.value)}
-                className="w-full border rounded px-3 py-2"
+                className={`w-full border rounded px-3 py-2 ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                }`}
               />
 
               <textarea
                 placeholder="Description (optional)"
                 value={templateDescription}
                 onChange={(e) => setTemplateDescription(e.target.value)}
-                className="w-full border rounded px-3 py-2"
                 rows={2}
+                className={`w-full border rounded px-3 py-2 ${
+                  isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+                }`}
               />
 
               <input
                 type="file"
                 accept=".doc,.docx"
                 onChange={handleFileChange}
+                className={isDarkMode ? 'text-white' : ''}
               />
             </div>
 
@@ -255,6 +282,7 @@ const CertificateTemplateSelector = ({ onSelect, selectedTemplateId }) => {
                   resetUploadForm();
                   setShowUploadModal(false);
                 }}
+                className={isDarkMode ? 'border-gray-600 text-gray-300 hover:bg-gray-700' : ''}
               >
                 Cancel
               </Button>

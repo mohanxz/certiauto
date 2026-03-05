@@ -1,6 +1,10 @@
+// src/modules/emailConfig/EmailConfigTable.jsx
 import React from 'react';
+import { useTheme } from '../../context/ThemeContext';
 
 const EmailConfigTable = ({ emailConfigs, onDelete, onEdit, onToggleStatus, onTest, testingEmail }) => {
+    const { isDarkMode } = useTheme();
+
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -29,7 +33,11 @@ const EmailConfigTable = ({ emailConfigs, onDelete, onEdit, onToggleStatus, onTe
     };
 
     return (
-        <div className="overflow-hidden bg-gradient-to-br from-white to-blue-50 rounded-2xl border border-blue-100 shadow-lg relative">
+        <div className={`overflow-hidden rounded-2xl border shadow-lg relative ${
+            isDarkMode 
+                ? 'bg-gradient-to-br from-gray-800 to-gray-750 border-gray-700' 
+                : 'bg-gradient-to-br from-white to-blue-50 border-blue-100'
+        }`}>
             {/* Scrollable container with custom scrollbar */}
             <div 
                 className="scroll-container"
@@ -38,7 +46,7 @@ const EmailConfigTable = ({ emailConfigs, onDelete, onEdit, onToggleStatus, onTe
                     overflowY: 'auto',
                     maxHeight: 'calc(100vh - 140px)',
                     scrollbarWidth: 'thin',
-                    scrollbarColor: '#3b82f6 #f1f5f9',
+                    scrollbarColor: isDarkMode ? '#4B5563 #374151' : '#3b82f6 #f1f5f9',
                 }}
             >
                 <style jsx>{`
@@ -47,19 +55,21 @@ const EmailConfigTable = ({ emailConfigs, onDelete, onEdit, onToggleStatus, onTe
                         height: 8px;
                     }
                     .scroll-container::-webkit-scrollbar-track {
-                        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+                        background: ${isDarkMode ? '#374151' : '#f8fafc'};
                         border-radius: 10px;
                     }
                     .scroll-container::-webkit-scrollbar-thumb {
-                        background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+                        background: ${isDarkMode ? '#4B5563' : '#3b82f6'};
                         border-radius: 10px;
-                        border: 2px solid #f8fafc;
+                        border: 2px solid ${isDarkMode ? '#1F2937' : '#f8fafc'};
                     }
                     .scroll-container::-webkit-scrollbar-thumb:hover {
-                        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+                        background: ${isDarkMode ? '#6B7280' : '#2563eb'};
                     }
                     .table-row-hover:hover {
-                        background: linear-gradient(90deg, rgba(59, 130, 246, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%);
+                        background: ${isDarkMode 
+                            ? 'linear-gradient(90deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%)' 
+                            : 'linear-gradient(90deg, rgba(59, 130, 246, 0.05) 0%, rgba(99, 102, 241, 0.05) 100%)'};
                         transform: translateX(4px);
                         transition: all 0.3s ease;
                     }
@@ -68,39 +78,53 @@ const EmailConfigTable = ({ emailConfigs, onDelete, onEdit, onToggleStatus, onTe
                     }
                     .action-button:hover {
                         transform: translateY(-2px);
-                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, ${isDarkMode ? '0.3' : '0.1'});
                     }
                 `}</style>
 
-                <table className="min-w-full divide-y divide-blue-100">
-                    <thead className="bg-gradient-to-r from-blue-50 to-indigo-50 sticky -top-1 z-10">
+                <table className="min-w-full divide-y divide-gray-200">
+                    <thead className={`sticky -top-1 z-10 ${
+                        isDarkMode 
+                            ? 'bg-gradient-to-r from-gray-700 to-gray-800' 
+                            : 'bg-gradient-to-r from-blue-50 to-indigo-50'
+                    }`}>
                         <tr>
                             <th className="px-8 py-4 text-left">
-                                <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                <div className={`flex items-center gap-2 text-sm font-semibold uppercase tracking-wider ${
+                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                }`}>
                                     <i className="fas fa-at"></i>
                                     Email Account
                                 </div>
                             </th>
                             <th className="px-8 py-4 text-left">
-                                <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                <div className={`flex items-center gap-2 text-sm font-semibold uppercase tracking-wider ${
+                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                }`}>
                                     <i className="fas fa-cloud"></i>
                                     Provider
                                 </div>
                             </th>
                             <th className="px-8 py-4 text-left">
-                                <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                <div className={`flex items-center gap-2 text-sm font-semibold uppercase tracking-wider ${
+                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                }`}>
                                     <i className="fas fa-signal"></i>
                                     Status
                                 </div>
                             </th>
                             <th className="px-8 py-4 text-left">
-                                <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                <div className={`flex items-center gap-2 text-sm font-semibold uppercase tracking-wider ${
+                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                }`}>
                                     <i className="fas fa-calendar-plus"></i>
                                     Added Date
                                 </div>
                             </th>
                             <th className="px-8 py-4 text-left">
-                                <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 uppercase tracking-wider">
+                                <div className={`flex items-center gap-2 text-sm font-semibold uppercase tracking-wider ${
+                                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                }`}>
                                     <i className="fas fa-cogs"></i>
                                     Actions
                                 </div>
@@ -108,7 +132,7 @@ const EmailConfigTable = ({ emailConfigs, onDelete, onEdit, onToggleStatus, onTe
                         </tr>
                     </thead>
 
-                    <tbody className="bg-white divide-y divide-blue-100">
+                    <tbody className={`divide-y ${isDarkMode ? 'divide-gray-700' : 'divide-blue-100'}`}>
                         {emailConfigs.map((config, index) => (
                             <tr 
                                 key={config._id} 
@@ -118,24 +142,29 @@ const EmailConfigTable = ({ emailConfigs, onDelete, onEdit, onToggleStatus, onTe
                                 {/* Email Account */}
                                 <td className="px-8 py-5">
                                     <div className="flex items-center">
-                                        <div className={`relative w-12 h-12 rounded-2xl mr-4 bg-gradient-to-br ${config.isActive 
-                                            ? 'from-emerald-100 to-green-100 shadow-lg shadow-emerald-200/50' 
-                                            : 'from-gray-100 to-gray-200 shadow-lg shadow-gray-200/50'
+                                        <div className={`relative w-12 h-12 rounded-2xl mr-4 ${
+                                            config.isActive 
+                                                ? isDarkMode
+                                                    ? 'from-emerald-900/30 to-green-900/30 shadow-lg shadow-emerald-900/20'
+                                                    : 'from-emerald-100 to-green-100 shadow-lg shadow-emerald-200/50'
+                                                : isDarkMode
+                                                    ? 'from-gray-700 to-gray-600 shadow-lg shadow-gray-800/50'
+                                                    : 'from-gray-100 to-gray-200 shadow-lg shadow-gray-200/50'
                                         }`}>
                                             <div className={`absolute inset-0 rounded-2xl flex items-center justify-center bg-gradient-to-br ${getProviderColor(config.provider)}`}>
                                                 <i className={`${getProviderIcon(config.provider)} text-lg text-white`}></i>
                                             </div>
                                             {config.isActive && (
-                                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                                                <div className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center">
                                                     <i className="fas fa-check text-xs text-white"></i>
                                                 </div>
                                             )}
                                         </div>
                                         <div>
-                                            <div className="text-sm font-semibold text-gray-900">
+                                            <div className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                                 {config.email}
                                             </div>
-                                            <div className="text-xs text-gray-500 mt-1">
+                                            <div className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                                 {config.provider || 'Gmail'} • {config.isActive ? 'Active now' : 'Inactive'}
                                             </div>
                                         </div>
@@ -144,9 +173,13 @@ const EmailConfigTable = ({ emailConfigs, onDelete, onEdit, onToggleStatus, onTe
 
                                 {/* Provider */}
                                 <td className="px-8 py-5">
-                                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-50 to-indigo-50">
+                                    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${
+                                        isDarkMode ? 'bg-blue-900/30' : 'bg-gradient-to-r from-blue-50 to-indigo-50'
+                                    }`}>
                                         <i className={`${getProviderIcon(config.provider)} ${getProviderColor(config.provider).replace('from-', 'text-').split(' ')[0]}`}></i>
-                                        <span className="text-sm font-medium text-gray-700 capitalize">
+                                        <span className={`text-sm font-medium capitalize ${
+                                            isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                                        }`}>
                                             {config.provider || 'Gmail'}
                                         </span>
                                     </div>
@@ -159,7 +192,9 @@ const EmailConfigTable = ({ emailConfigs, onDelete, onEdit, onToggleStatus, onTe
                                         className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 action-button ${
                                             config.isActive
                                                 ? 'bg-gradient-to-r from-emerald-500 to-green-500 text-white shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40'
-                                                : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/40'
+                                                : isDarkMode
+                                                    ? 'bg-gradient-to-r from-gray-600 to-gray-700 text-gray-300 shadow-lg shadow-gray-800/30 hover:shadow-xl hover:shadow-gray-800/40'
+                                                    : 'bg-gradient-to-r from-gray-400 to-gray-500 text-white shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/40'
                                         }`}
                                         title={`Click to ${config.isActive ? 'deactivate' : 'activate'}`}
                                     >
@@ -170,13 +205,15 @@ const EmailConfigTable = ({ emailConfigs, onDelete, onEdit, onToggleStatus, onTe
 
                                 {/* Added Date */}
                                 <td className="px-8 py-5">
-                                    <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100">
-                                        <i className="fas fa-calendar-alt text-gray-400"></i>
+                                    <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-xl ${
+                                        isDarkMode ? 'bg-gray-700' : 'bg-gradient-to-r from-gray-50 to-gray-100'
+                                    }`}>
+                                        <i className={`fas fa-calendar-alt ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}></i>
                                         <div>
-                                            <div className="text-sm font-medium text-gray-900">
+                                            <div className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
                                                 {formatDate(config.createdAt)}
                                             </div>
-                                            <div className="text-xs text-gray-500">
+                                            <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                                 Added
                                             </div>
                                         </div>
@@ -186,11 +223,26 @@ const EmailConfigTable = ({ emailConfigs, onDelete, onEdit, onToggleStatus, onTe
                                 {/* Actions */}
                                 <td className="px-8 py-5">
                                     <div className="flex items-center gap-2">
-                                    
+                                        <button
+                                            onClick={() => onTest(config)}
+                                            disabled={testingEmail === config._id}
+                                            className={`p-3 rounded-xl transition-all duration-300 action-button ${
+                                                isDarkMode
+                                                    ? 'bg-blue-900/30 text-blue-400 hover:bg-blue-800/30'
+                                                    : 'bg-gradient-to-r from-blue-50 to-indigo-50 text-blue-600 hover:bg-gradient-to-r hover:from-blue-100 hover:to-indigo-100'
+                                            }`}
+                                            title="Test Configuration"
+                                        >
+                                            <i className={`fas ${testingEmail === config._id ? 'fa-spinner fa-spin' : 'fa-paper-plane'}`}></i>
+                                        </button>
 
                                         <button
                                             onClick={() => onEdit(config)}
-                                            className="p-3 rounded-xl bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-600 hover:bg-gradient-to-r hover:from-emerald-100 hover:to-green-100 transition-all duration-300 action-button"
+                                            className={`p-3 rounded-xl transition-all duration-300 action-button ${
+                                                isDarkMode
+                                                    ? 'bg-emerald-900/30 text-emerald-400 hover:bg-emerald-800/30'
+                                                    : 'bg-gradient-to-r from-emerald-50 to-green-50 text-emerald-600 hover:bg-gradient-to-r hover:from-emerald-100 hover:to-green-100'
+                                            }`}
                                             title="Edit Configuration"
                                         >
                                             <i className="fas fa-edit"></i>
@@ -198,7 +250,11 @@ const EmailConfigTable = ({ emailConfigs, onDelete, onEdit, onToggleStatus, onTe
 
                                         <button
                                             onClick={() => onDelete(config._id)}
-                                            className="p-3 rounded-xl bg-gradient-to-r from-red-50 to-pink-50 text-red-600 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100 transition-all duration-300 action-button"
+                                            className={`p-3 rounded-xl transition-all duration-300 action-button ${
+                                                isDarkMode
+                                                    ? 'bg-red-900/30 text-red-400 hover:bg-red-800/30'
+                                                    : 'bg-gradient-to-r from-red-50 to-pink-50 text-red-600 hover:bg-gradient-to-r hover:from-red-100 hover:to-pink-100'
+                                            }`}
                                             title="Delete Account"
                                         >
                                             <i className="fas fa-trash-alt"></i>
@@ -212,15 +268,25 @@ const EmailConfigTable = ({ emailConfigs, onDelete, onEdit, onToggleStatus, onTe
             </div>
 
             {/* Table Footer */}
-            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-3 border-t border-blue-100">
-                <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className={`px-8 py-3 border-t ${
+                isDarkMode 
+                    ? 'bg-gray-700 border-gray-600' 
+                    : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100'
+            }`}>
+                <div className={`flex items-center justify-between text-sm ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                }`}>
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2">
                             <div className="w-3 h-3 rounded-full bg-gradient-to-r from-emerald-500 to-green-500"></div>
                             <span>{emailConfigs.filter(e => e.isActive).length} Active</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full bg-gradient-to-r from-gray-400 to-gray-500"></div>
+                            <div className={`w-3 h-3 rounded-full ${
+                                isDarkMode 
+                                    ? 'bg-gradient-to-r from-gray-600 to-gray-700' 
+                                    : 'bg-gradient-to-r from-gray-400 to-gray-500'
+                            }`}></div>
                             <span>{emailConfigs.filter(e => !e.isActive).length} Inactive</span>
                         </div>
                     </div>

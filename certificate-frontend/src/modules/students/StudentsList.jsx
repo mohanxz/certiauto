@@ -1,3 +1,4 @@
+// src/modules/students/StudentsList.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { studentAPI } from "../../api/students";
@@ -13,12 +14,14 @@ import StudentForm from "./StudentForm";
 import BulkUploadModal from "./BulkUploadModal";
 import StudentEmailModal from "./StudentEmailModal";
 import { useToast } from "../../hooks/useToast";
+import { useTheme } from "../../context/ThemeContext";
 
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import autoTable from "jspdf-autotable";
 
 const StudentsList = () => {
+  const { isDarkMode } = useTheme();
   const [students, setStudents] = useState([]);
   const [batches, setBatches] = useState([]);
   const [courses, setCourses] = useState([]);
@@ -140,8 +143,6 @@ const StudentsList = () => {
     }
   };
 
-  // In StudentsList.jsx - Update the handleDeleteAllStudents function
-
   const handleDeleteAllStudents = async () => {
     if (students.length === 0) {
       showToast("No students to delete", "warning");
@@ -151,17 +152,14 @@ const StudentsList = () => {
 
     setIsDeletingAll(true);
     try {
-      // Build the same filter params as the fetch function
       const params = {};
 
       if (searchTerm) params.search = searchTerm;
       if (batchFilter !== "all") params.batchId = batchFilter;
       if (courseFilter !== "all") params.courseId = courseFilter;
 
-      // Log what's being deleted
       console.log("Deleting students with filters:", params);
 
-      // Use the new endpoint with filters
       const response = await studentAPI.deleteFilteredStudents(params);
 
       if (response.success) {
@@ -170,7 +168,7 @@ const StudentsList = () => {
           "success",
         );
         setShowDeleteAllConfirm(false);
-        fetchStudents(); // Refresh the list
+        fetchStudents();
       } else {
         showToast(response.message || "Failed to delete students", "error");
       }
@@ -199,12 +197,12 @@ const StudentsList = () => {
       });
 
       doc.setFontSize(20);
-      doc.setTextColor(40, 40, 40);
+      doc.setTextColor(isDarkMode ? 200 : 40, isDarkMode ? 200 : 40, isDarkMode ? 200 : 40);
       doc.setFont("helvetica", "bold");
       doc.text("STUDENTS LIST", 14, 20);
 
       doc.setFontSize(10);
-      doc.setTextColor(100, 100, 100);
+      doc.setTextColor(isDarkMode ? 150 : 100, isDarkMode ? 150 : 100, isDarkMode ? 150 : 100);
       doc.setFont("helvetica", "normal");
       const date = new Date().toLocaleDateString("en-US", {
         year: "numeric",
@@ -265,7 +263,7 @@ const StudentsList = () => {
           fontStyle: "bold",
         },
         alternateRowStyles: {
-          fillColor: [245, 245, 245],
+          fillColor: isDarkMode ? [60, 60, 60] : [245, 245, 245],
         },
         columnStyles: {
           0: { cellWidth: 10 },
@@ -284,10 +282,12 @@ const StudentsList = () => {
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
+      doc.setTextColor(isDarkMode ? 200 : 40, isDarkMode ? 200 : 40, isDarkMode ? 200 : 40);
       doc.text("SUMMARY", 14, finalY);
 
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
+      doc.setTextColor(isDarkMode ? 150 : 100, isDarkMode ? 150 : 100, isDarkMode ? 150 : 100);
       doc.text(
         [
           `Total Students: ${students.length}`,
@@ -518,30 +518,42 @@ const StudentsList = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
             Students Management
           </h1>
-          <p className="text-gray-600">
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
             Manage student enrollments and academic records
           </p>
 
           {(selectedBatch || selectedCourse) && (
-            <div className="mt-2 flex items-center gap-2">
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
               {selectedBatch && (
-                <span className="inline-flex items-center text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+                <span className={`inline-flex items-center text-sm px-3 py-1 rounded-full border ${
+                  isDarkMode 
+                    ? 'text-blue-300 bg-blue-900/20 border-blue-800' 
+                    : 'text-blue-600 bg-blue-50 border-blue-200'
+                }`}>
                   <i className="fas fa-filter mr-1"></i>
                   Batch: {selectedBatch.batchName}
                 </span>
               )}
               {selectedCourse && (
-                <span className="inline-flex items-center text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full border border-green-200">
+                <span className={`inline-flex items-center text-sm px-3 py-1 rounded-full border ${
+                  isDarkMode 
+                    ? 'text-green-300 bg-green-900/20 border-green-800' 
+                    : 'text-green-600 bg-green-50 border-green-200'
+                }`}>
                   <i className="fas fa-filter mr-1"></i>
                   Course: {selectedCourse.courseName}
                 </span>
               )}
               <button
                 onClick={clearFilters}
-                className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2 py-1 rounded transition-colors"
+                className={`inline-flex items-center text-sm px-2 py-1 rounded transition-colors ${
+                  isDarkMode 
+                    ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                }`}
                 title="Clear filters"
               >
                 <i className="fas fa-times mr-1"></i>
@@ -551,15 +563,23 @@ const StudentsList = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap justify-end">
           {/* View Mode Toggle */}
-          <div className="flex bg-white rounded-lg border border-gray-200 p-1 shadow-sm">
+          <div className={`flex rounded-lg border p-1 shadow-sm ${
+            isDarkMode 
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white border-gray-200'
+          }`}>
             <button
               onClick={() => setViewMode("table")}
               className={`p-2.5 rounded-md transition-all duration-300 flex items-center gap-2 ${
                 viewMode === "table"
-                  ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm"
-                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                  ? isDarkMode
+                    ? 'bg-gradient-to-r from-blue-900/30 to-indigo-900/30 text-blue-300 border border-blue-800 shadow-sm'
+                    : 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
               }`}
               title="Table View"
             >
@@ -573,8 +593,12 @@ const StudentsList = () => {
               onClick={() => setViewMode("card")}
               className={`p-2.5 rounded-md transition-all duration-300 flex items-center gap-2 ${
                 viewMode === "card"
-                  ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm"
-                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                  ? isDarkMode
+                    ? 'bg-gradient-to-r from-blue-900/30 to-indigo-900/30 text-blue-300 border border-blue-800 shadow-sm'
+                    : 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm'
+                  : isDarkMode
+                    ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
               }`}
               title="Card View"
             >
@@ -592,7 +616,10 @@ const StudentsList = () => {
               variant="outline"
               icon="fas fa-trash-alt"
               size="medium"
-              className="bg-gradient-to-r from-red-50 to-red-100 border-red-200 hover:from-red-100 hover:to-red-200 text-red-700 hover:text-red-800 hover:border-red-300"
+              className={isDarkMode
+                ? 'bg-red-900/20 border-red-800 hover:bg-red-900/30 text-red-300 hover:text-red-200 hover:border-red-700'
+                : 'bg-gradient-to-r from-red-50 to-red-100 border-red-200 hover:from-red-100 hover:to-red-200 text-red-700 hover:text-red-800 hover:border-red-300'
+              }
               title="Delete all students"
             >
               <span className="hidden sm:inline">Delete All</span>
@@ -609,7 +636,10 @@ const StudentsList = () => {
             }
             size="medium"
             disabled={students.length === 0 || isGeneratingPDF}
-            className="bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200 hover:from-emerald-100 hover:to-emerald-200 text-emerald-700 hover:text-emerald-800 hover:border-emerald-300"
+            className={isDarkMode
+              ? 'bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-200 hover:text-white'
+              : 'bg-gradient-to-r from-emerald-50 to-emerald-100 border-emerald-200 hover:from-emerald-100 hover:to-emerald-200 text-emerald-700 hover:text-emerald-800 hover:border-emerald-300'
+            }
           >
             {isGeneratingPDF ? "Generating..." : "Download PDF"}
           </Button>
@@ -620,6 +650,10 @@ const StudentsList = () => {
             icon="fas fa-upload"
             size="medium"
             disabled={batches.length === 0}
+            className={isDarkMode
+              ? 'bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-200 hover:text-white'
+              : ''
+            }
           >
             <span className="hidden sm:inline">Bulk Upload</span>
             <span className="sm:hidden">Upload</span>
@@ -646,11 +680,12 @@ const StudentsList = () => {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
             <div
-              className="fixed inset-0 transition-opacity"
+              className={`fixed inset-0 transition-opacity ${
+                isDarkMode ? 'bg-gray-900 opacity-90' : 'bg-gray-500 opacity-75'
+              }`}
               aria-hidden="true"
-            >
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
+              onClick={() => !isDeletingAll && setShowDeleteAllConfirm(false)}
+            ></div>
 
             <span
               className="hidden sm:inline-block sm:align-middle sm:h-screen"
@@ -659,20 +694,32 @@ const StudentsList = () => {
               &#8203;
             </span>
 
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+            <div className={`inline-block align-bottom rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full ${
+              isDarkMode ? 'bg-gray-800' : 'bg-white'
+            }`}>
+              <div className={`px-4 pt-5 pb-4 sm:p-6 sm:pb-4 ${
+                isDarkMode ? 'bg-gray-800' : 'bg-white'
+              }`}>
                 <div className="sm:flex sm:items-start">
-                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                    <i className="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                  <div className={`mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full sm:mx-0 sm:h-10 sm:w-10 ${
+                    isDarkMode ? 'bg-red-900/30' : 'bg-red-100'
+                  }`}>
+                    <i className={`fas fa-exclamation-triangle text-xl ${
+                      isDarkMode ? 'text-red-400' : 'text-red-600'
+                    }`}></i>
                   </div>
                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                    <h3 className={`text-lg leading-6 font-medium ${
+                      isDarkMode ? 'text-white' : 'text-gray-900'
+                    }`}>
                       Delete All Students
                     </h3>
                     <div className="mt-2">
-                      <p className="text-sm text-gray-500">
+                      <p className={`text-sm ${
+                        isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                      }`}>
                         Are you sure you want to delete all{" "}
-                        <span className="font-bold text-red-600">
+                        <span className="font-bold text-red-600 dark:text-red-400">
                           {students.length}
                         </span>{" "}
                         students? This action cannot be undone and will
@@ -681,8 +728,14 @@ const StudentsList = () => {
                       </p>
                     </div>
 
-                    <div className="mt-4 p-3 bg-red-50 rounded-md border border-red-200">
-                      <p className="text-xs text-red-700 flex items-start">
+                    <div className={`mt-4 p-3 rounded-md border ${
+                      isDarkMode 
+                        ? 'bg-red-900/20 border-red-800' 
+                        : 'bg-red-50 border-red-200'
+                    }`}>
+                      <p className={`text-xs flex items-start ${
+                        isDarkMode ? 'text-red-300' : 'text-red-700'
+                      }`}>
                         <i className="fas fa-info-circle mr-2 mt-0.5"></i>
                         <span>
                           This will also delete associated email logs and
@@ -693,8 +746,14 @@ const StudentsList = () => {
                     </div>
 
                     {(selectedBatch || selectedCourse || searchTerm) && (
-                      <div className="mt-4 p-3 bg-yellow-50 rounded-md border border-yellow-200">
-                        <p className="text-xs text-yellow-700 flex items-start">
+                      <div className={`mt-4 p-3 rounded-md border ${
+                        isDarkMode 
+                          ? 'bg-yellow-900/20 border-yellow-800' 
+                          : 'bg-yellow-50 border-yellow-200'
+                      }`}>
+                        <p className={`text-xs flex items-start ${
+                          isDarkMode ? 'text-yellow-300' : 'text-yellow-700'
+                        }`}>
                           <i className="fas fa-filter mr-2 mt-0.5"></i>
                           <span>
                             Active filters detected. This will delete ALL
@@ -706,7 +765,9 @@ const StudentsList = () => {
                   </div>
                 </div>
               </div>
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3">
+              <div className={`px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse gap-3 ${
+                isDarkMode ? 'bg-gray-700' : 'bg-gray-50'
+              }`}>
                 <Button
                   onClick={handleDeleteAllStudents}
                   variant="danger"
@@ -737,11 +798,17 @@ const StudentsList = () => {
       )}
 
       {/* Search and Filters */}
-      <div className="bg-gradient-to-br from-white to-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+      <div className={`p-5 rounded-xl border shadow-sm ${
+        isDarkMode 
+          ? 'bg-gradient-to-br from-gray-800 to-gray-750 border-gray-700' 
+          : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'
+      }`}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
               Search Students
             </label>
             <div className="relative group">
@@ -750,15 +817,23 @@ const StudentsList = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name, email, or ID..."
-                className="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white/80 transition-all duration-300 hover:border-blue-400"
+                className={`
+                  block w-full rounded-xl border-2 px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300
+                  ${isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white/80 border-gray-300 text-gray-900 placeholder-gray-500'
+                  }
+                `}
               />
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <i className="fas fa-search text-gray-400"></i>
+                <i className={`fas fa-search ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
               </div>
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm("")}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  className={`absolute inset-y-0 right-0 pr-4 flex items-center transition-colors ${
+                    isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'
+                  }`}
                 >
                   <i className="fas fa-times"></i>
                 </button>
@@ -768,7 +843,9 @@ const StudentsList = () => {
 
           {/* Batch Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
               Filter by Batch
             </label>
             <div className="relative">
@@ -781,7 +858,13 @@ const StudentsList = () => {
                   );
                   setSelectedBatch(selected || null);
                 }}
-                className="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white/80 transition-all duration-300 hover:border-blue-400"
+                className={`
+                  block w-full rounded-xl border-2 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300
+                  ${isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white/80 border-gray-300 text-gray-900'
+                  }
+                `}
               >
                 <option value="all">All Batches</option>
                 {batches.map((batch) => (
@@ -791,14 +874,16 @@ const StudentsList = () => {
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <i className="fas fa-chevron-down text-gray-400"></i>
+                <i className={`fas fa-chevron-down ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
               </div>
             </div>
           </div>
 
           {/* Course Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
               Filter by Course
             </label>
             <div className="relative">
@@ -811,7 +896,13 @@ const StudentsList = () => {
                   );
                   setSelectedCourse(selected || null);
                 }}
-                className="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white/80 transition-all duration-300 hover:border-blue-400"
+                className={`
+                  block w-full rounded-xl border-2 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300
+                  ${isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white/80 border-gray-300 text-gray-900'
+                  }
+                `}
               >
                 <option value="all">All Courses</option>
                 {courses.map((course) => (
@@ -821,7 +912,7 @@ const StudentsList = () => {
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <i className="fas fa-chevron-down text-gray-400"></i>
+                <i className={`fas fa-chevron-down ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
               </div>
             </div>
           </div>
@@ -832,7 +923,11 @@ const StudentsList = () => {
               onClick={() => fetchStudents()}
               variant="outline"
               icon="fas fa-sync-alt"
-              className="flex-1"
+              className={`flex-1 ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600 hover:bg-gray-600 text-gray-200' 
+                  : ''
+              }`}
             >
               Refresh
             </Button>
@@ -854,35 +949,45 @@ const StudentsList = () => {
 
         {/* Active filters notification */}
         {(selectedBatch || selectedCourse || searchTerm) && (
-          <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+          <div className={`mt-4 p-3 rounded-lg border ${
+            isDarkMode 
+              ? 'bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-blue-800' 
+              : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+          }`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                   <i className="fas fa-filter text-white"></i>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-800">
+                  <p className={`font-medium ${
+                    isDarkMode ? 'text-gray-200' : 'text-gray-800'
+                  }`}>
                     Active filters:
                     {searchTerm && (
-                      <span className="ml-2 text-blue-600">
+                      <span className="ml-2 text-blue-600 dark:text-blue-400">
                         Search: "{searchTerm}"
                       </span>
                     )}
                     {selectedBatch && (
-                      <span className="ml-2 text-green-600">
+                      <span className="ml-2 text-green-600 dark:text-green-400">
                         Batch: {selectedBatch.batchName}
                       </span>
                     )}
                     {selectedCourse && (
-                      <span className="ml-2 text-purple-600">
+                      <span className="ml-2 text-purple-600 dark:text-purple-400">
                         Course: {selectedCourse.courseName}
                       </span>
                     )}
                   </p>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className={`text-sm mt-1 ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
+                  }`}>
                     Showing {students.length} students
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className={`text-sm mt-1 ${
+                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
                     Click "Download PDF" to export this filtered list
                   </p>
                 </div>

@@ -23,14 +23,12 @@ export const sendEmail = async (
      * =====================================================
      */
     const scoreValue = Number(
-      variables?.score ||
-      variables?.mark ||
-      variables?.percentage
+      variables?.score || variables?.mark || variables?.percentage,
     );
 
     if (!isNaN(scoreValue) && scoreValue < 45) {
       console.log(
-        `🚫 Email blocked. Student score ${scoreValue} is below passing (45).`
+        `🚫 Email blocked. Student score ${scoreValue} is below passing (45).`,
       );
       return false;
     }
@@ -61,14 +59,47 @@ export const sendEmail = async (
     /**
      * =====================================================
      * REPLACE TEMPLATE VARIABLES ({name}, {course}, etc.)
+     * IN BOTH SUBJECT AND CONTENT
      * =====================================================
      */
+    let processedSubject = subject;
     let processedContent = content;
 
+    // Log variables being used
+    console.log("📝 Variables for replacement:", variables);
+
+    // Replace in subject
     Object.keys(variables).forEach((key) => {
       const regex = new RegExp(`{${key}}`, "g");
-      processedContent = processedContent.replace(regex, variables[key]);
+      if (processedSubject.match(regex)) {
+        console.log(
+          `🔄 Replacing {${key}} with "${variables[key]}" in subject`,
+        );
+        processedSubject = processedSubject.replace(regex, variables[key]);
+      }
     });
+
+    // Replace in content
+    Object.keys(variables).forEach((key) => {
+      const regex = new RegExp(`{${key}}`, "g");
+      if (processedContent.match(regex)) {
+        console.log(
+          `🔄 Replacing {${key}} with "${variables[key]}" in content`,
+        );
+        processedContent = processedContent.replace(regex, variables[key]);
+      }
+    });
+    const subjectMatches: string[] = processedSubject.match(/{[^}]+}/g) ?? [];
+    const contentMatches: string[] = processedContent.match(/{[^}]+}/g) ?? [];
+
+    const remainingPlaceholders = [...subjectMatches, ...contentMatches];
+
+    if (remainingPlaceholders.length > 0) {
+      console.log(
+        "⚠️ Warning: Unreplaced placeholders:",
+        remainingPlaceholders,
+      );
+    }
 
     /**
      * =====================================================
@@ -90,18 +121,18 @@ export const sendEmail = async (
 
     /**
      * =====================================================
-     * MAIL OPTIONS
+     * MAIL OPTIONS - USE PROCESSED SUBJECT
      * =====================================================
      */
     const mailOptions: any = {
       from: `"Cybernaut EdTech Pvt. Ltd." <${fromEmail}>`,
       to,
-      subject,
+      subject: processedSubject, // ✅ Use the processed subject
       attachments,
-      ...(isHtml
-        ? { html: processedContent }
-        : { text: processedContent }),
+      ...(isHtml ? { html: processedContent } : { text: processedContent }),
     };
+
+    console.log("📧 Final subject:", processedSubject);
 
     /**
      * =====================================================
@@ -128,7 +159,6 @@ export const sendEmail = async (
 
     console.error("❌ Email sending failed - no confirmation");
     return false;
-
   } catch (error: any) {
     console.error("❌ MAIL ERROR:", error.message);
     return false;

@@ -1,3 +1,4 @@
+// src/pages/auth/Login.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../auth/AuthContext";
@@ -6,8 +7,10 @@ import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 import logo from "../../assets/images/logo.png";
+import { useTheme } from "../../context/ThemeContext";
 
 const Login = () => {
+  const { isDarkMode } = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -74,19 +77,16 @@ const Login = () => {
     try {
       const result = await login(email, password);
       if (result.success) {
-        // Handle remember me
         if (rememberMe) {
           localStorage.setItem("rememberedEmail", email);
         } else {
           localStorage.removeItem("rememberedEmail");
         }
 
-        // Clear login attempts on success
         setLoginAttempts(0);
 
         showToast("Login successful! Redirecting...", "success");
 
-        // Redirect to intended page or dashboard
         const from = location.state?.from?.pathname || "/dashboard";
         setTimeout(() => navigate(from, { replace: true }), 1500);
       } else {
@@ -113,12 +113,24 @@ const Login = () => {
   const remainingAttempts = 5 - loginAttempts;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex overflow-hidden">
-      {/* Left side - Graphics & Info (previously right side) */}
-      <div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-8 relative overflow-hidden">
+    <div className={`min-h-screen flex overflow-hidden transition-colors duration-300 ${
+      isDarkMode 
+        ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
+        : 'bg-gradient-to-br from-gray-50 to-white'
+    }`}>
+      {/* Left side - Graphics & Info */}
+      <div className={`hidden lg:flex flex-1 flex-col items-center justify-center p-8 relative overflow-hidden ${
+        isDarkMode 
+          ? 'bg-gradient-to-br from-gray-800 to-gray-900' 
+          : 'bg-gradient-to-br from-blue-50 to-indigo-50'
+      }`}>
         {/* Animated background elements */}
-        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-100 rounded-full -translate-y-32 translate-x-32 opacity-50"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-100 rounded-full translate-y-48 -translate-x-48 opacity-50"></div>
+        <div className={`absolute top-0 right-0 w-64 h-64 rounded-full -translate-y-32 translate-x-32 opacity-50 ${
+          isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100'
+        }`}></div>
+        <div className={`absolute bottom-0 left-0 w-96 h-96 rounded-full translate-y-48 -translate-x-48 opacity-50 ${
+          isDarkMode ? 'bg-indigo-900/30' : 'bg-indigo-100'
+        }`}></div>
 
         <div className="relative z-10 max-w-lg w-full">
           <div className="mb-8">
@@ -131,19 +143,25 @@ const Login = () => {
           </div>
 
           <div className="text-center space-y-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-gray-900">
+            <h2 className={`text-2xl md:text-3xl font-bold ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}>
               Enterprise-Grade Certificate Management
             </h2>
-            <p className="text-gray-600 text-lg">
+            <p className={`text-lg ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-600'
+            }`}>
               Secure, scalable, and compliant certificate lifecycle management
             </p>
           </div>
         </div>
       </div>
 
-      {/* Right side - Login Form (previously left side) */}
+      {/* Right side - Login Form */}
       <div className="flex-1 flex items-center justify-center p-4 md:p-8 relative">
-        <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
+        <div className={`absolute inset-0 ${
+          isDarkMode ? 'bg-grid-gray-800' : 'bg-grid-slate-100'
+        } [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10`} />
 
         <div className="max-w-md w-full animate-fade-in">
           <div className="text-center mb-8">
@@ -153,21 +171,35 @@ const Login = () => {
               className="mx-auto mb-4 w-16 h-16 md:w-20 md:h-20"
             />
 
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+            <h1 className={`text-3xl md:text-4xl font-bold mb-2 ${
+              isDarkMode ? 'text-white' : 'text-gray-900'
+            }`}>
               Welcome Back
             </h1>
 
-            <p className="text-gray-600 text-sm md:text-base">
+            <p className={`text-sm md:text-base ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-600'
+            }`}>
               Sign in to your certificate management dashboard
             </p>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-gray-100 p-6 md:p-8 transform transition-all hover:shadow-2xl">
+          <div className={`backdrop-blur-sm rounded-2xl shadow-xl border p-6 md:p-8 transform transition-all hover:shadow-2xl ${
+            isDarkMode 
+              ? 'bg-gray-800/80 border-gray-700' 
+              : 'bg-white/80 border-gray-100'
+          }`}>
             {loginAttempts >= 3 && remainingAttempts > 0 && (
-              <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className={`mb-6 p-4 rounded-lg border ${
+                isDarkMode 
+                  ? 'bg-yellow-900/20 border-yellow-800' 
+                  : 'bg-yellow-50 border-yellow-200'
+              }`}>
                 <div className="flex items-center">
-                  <i className="fas fa-exclamation-triangle text-yellow-500 mr-3"></i>
-                  <div className="text-sm text-yellow-800">
+                  <i className={`fas fa-exclamation-triangle mr-3 ${
+                    isDarkMode ? 'text-yellow-400' : 'text-yellow-500'
+                  }`}></i>
+                  <div className={`text-sm ${isDarkMode ? 'text-yellow-300' : 'text-yellow-800'}`}>
                     <p className="font-medium">Multiple failed attempts</p>
                     <p className="mt-1">
                       {remainingAttempts} attempt
@@ -199,7 +231,7 @@ const Login = () => {
 
               <Input
                 label="Password"
-                type={showPassword ? "text" : "password"} // Hidden by default
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
@@ -213,7 +245,11 @@ const Login = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    className="text-gray-500 hover:text-blue-600 focus:outline-none"
+                    className={`focus:outline-none ${
+                      isDarkMode 
+                        ? 'text-gray-400 hover:text-blue-400' 
+                        : 'text-gray-500 hover:text-blue-600'
+                    }`}
                   >
                     <i
                       className={`fas ${
@@ -239,7 +275,9 @@ const Login = () => {
                   />
                   <label
                     htmlFor="remember"
-                    className="ml-2 text-sm text-gray-700 cursor-pointer select-none"
+                    className={`ml-2 text-sm cursor-pointer select-none ${
+                      isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                    }`}
                   >
                     Remember this device
                   </label>
@@ -258,7 +296,9 @@ const Login = () => {
 
               <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-200"></div>
+                  <div className={`w-full border-t ${
+                    isDarkMode ? 'border-gray-700' : 'border-gray-200'
+                  }`}></div>
                 </div>
               </div>
             </form>
@@ -268,7 +308,11 @@ const Login = () => {
 
       {/* Mobile view toggle for animation */}
       <button
-        className="lg:hidden fixed bottom-4 right-4 w-12 h-12 bg-blue-600 text-white rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors z-50"
+        className={`lg:hidden fixed bottom-4 right-4 w-12 h-12 text-white rounded-full shadow-lg flex items-center justify-center transition-colors z-50 ${
+          isDarkMode 
+            ? 'bg-blue-700 hover:bg-blue-800' 
+            : 'bg-blue-600 hover:bg-blue-700'
+        }`}
         onClick={() =>
           document
             .querySelector(".hidden.lg\\:flex")

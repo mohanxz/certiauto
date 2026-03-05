@@ -1,9 +1,12 @@
+// src/components/bulk-email/StudentSelector.jsx
 import React, { useState, useEffect } from 'react';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../hooks/useToast';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
+import { useTheme } from '../../context/ThemeContext';
 
 const StudentSelector = ({ onSelectionChange, onFilterChange, filters, selectedStudents }) => {
+  const { isDarkMode } = useTheme();
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -58,10 +61,8 @@ const StudentSelector = ({ onSelectionChange, onFilterChange, filters, selectedS
     if (hasFilters) {
       loadFilteredStudents();
     } else if (localFilters.search) {
-      // Only search text, load all active students
       loadAllStudents();
     } else {
-      // Clear students if no filters
       setStudents([]);
       setFilteredStudents([]);
     }
@@ -93,7 +94,6 @@ const StudentSelector = ({ onSelectionChange, onFilterChange, filters, selectedS
     try {
       const token = localStorage.getItem('token');
       
-      // Use the correct endpoint: get-all-batches and filter client-side
       const response = await fetch('http://localhost:5000/api/batch/get-all-batches', {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -104,9 +104,7 @@ const StudentSelector = ({ onSelectionChange, onFilterChange, filters, selectedS
       const data = await response.json();
       
       if (data.success) {
-        // Filter batches by programId client-side
         const filteredBatches = data.data.filter(batch => {
-          // Handle both populated object and string ID
           const batchProgramId = batch.programId?._id || batch.programId;
           return batchProgramId === programId;
         });
@@ -126,7 +124,6 @@ const StudentSelector = ({ onSelectionChange, onFilterChange, filters, selectedS
     try {
       const token = localStorage.getItem('token');
       
-      // Use the correct endpoint: get-all-courses
       const response = await fetch('http://localhost:5000/api/course/get-all-courses', {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -137,8 +134,6 @@ const StudentSelector = ({ onSelectionChange, onFilterChange, filters, selectedS
       const data = await response.json();
       
       if (data.success) {
-        // For now, show all courses - filtering will be done at student level
-        // or you can implement course-batch relationship if it exists
         setCourses(data.data || []);
       } else {
         setCourses([]);
@@ -174,7 +169,6 @@ const StudentSelector = ({ onSelectionChange, onFilterChange, filters, selectedS
         const fetchedStudents = data.data || [];
         setStudents(fetchedStudents);
         
-        // Apply search filter
         if (localFilters.search) {
           const searchLower = localFilters.search.toLowerCase();
           const filtered = fetchedStudents.filter(student =>
@@ -203,7 +197,6 @@ const StudentSelector = ({ onSelectionChange, onFilterChange, filters, selectedS
     try {
       setLoading(true);
       
-      // Build query parameters
       const params = new URLSearchParams();
       if (localFilters.programId) params.append('programId', localFilters.programId);
       if (localFilters.batchId) params.append('batchId', localFilters.batchId);
@@ -231,7 +224,6 @@ const StudentSelector = ({ onSelectionChange, onFilterChange, filters, selectedS
         setStudents(fetchedStudents);
         setFilteredStudents(fetchedStudents);
         
-        // Notify parent component
         onFilterChange(localFilters);
       } else {
         setStudents([]);
@@ -254,7 +246,6 @@ const StudentSelector = ({ onSelectionChange, onFilterChange, filters, selectedS
     setLocalFilters(prev => {
       const newFilters = { ...prev, [name]: value };
       
-      // Reset dependent filters
       if (name === 'programId') {
         newFilters.batchId = '';
         newFilters.courseId = '';
@@ -275,7 +266,6 @@ const StudentSelector = ({ onSelectionChange, onFilterChange, filters, selectedS
     const searchValue = e.target.value;
     setLocalFilters(prev => ({ ...prev, search: searchValue }));
     
-    // Apply search filter to already loaded students
     if (searchValue) {
       const searchLower = searchValue.toLowerCase();
       const filtered = students.filter(student =>
@@ -301,27 +291,26 @@ const StudentSelector = ({ onSelectionChange, onFilterChange, filters, selectedS
 
     onSelectionChange(newSelection);
   };
-const handleSelectAll = () => {
-  const newSelected = [...selectedStudents];
 
-  filteredStudents.forEach(student => {
-    if (!newSelected.some(s => s._id === student._id)) {
-      newSelected.push(student);
-    }
-  });
+  const handleSelectAll = () => {
+    const newSelected = [...selectedStudents];
 
-  onSelectionChange(
-    filteredStudents.every(f =>
-      selectedStudents.some(s => s._id === f._id)
-    )
-      ? selectedStudents.filter(
-          s => !filteredStudents.some(f => f._id === s._id)
-        )
-      : newSelected
-  );
-};
+    filteredStudents.forEach(student => {
+      if (!newSelected.some(s => s._id === student._id)) {
+        newSelected.push(student);
+      }
+    });
 
-
+    onSelectionChange(
+      filteredStudents.every(f =>
+        selectedStudents.some(s => s._id === f._id)
+      )
+        ? selectedStudents.filter(
+            s => !filteredStudents.some(f => f._id === s._id)
+          )
+        : newSelected
+    );
+  };
 
   const handleClearFilters = () => {
     const clearedFilters = {
@@ -346,20 +335,30 @@ const handleSelectAll = () => {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold text-gray-800">Filter and Select Students</h3>
+      <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+        Filter and Select Students
+      </h3>
 
-      <div className="bg-gray-50 rounded-lg  space-y-4">
+      <div className={`rounded-lg p-6 space-y-4 ${
+        isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-gray-50'
+      }`}>
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {/* Program Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
               Program
             </label>
             <select
               name="programId"
               value={localFilters.programId || ''}
               onChange={handleFilterChange}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
               <option value="">All Programs</option>
               {programs.map(program => (
@@ -372,7 +371,9 @@ const handleSelectAll = () => {
 
           {/* Batch Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
               Batch
             </label>
             <select
@@ -380,7 +381,11 @@ const handleSelectAll = () => {
               value={localFilters.batchId || ''}
               onChange={handleFilterChange}
               disabled={!localFilters.programId}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50"
+              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:opacity-50 ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white disabled:bg-gray-800' 
+                  : 'bg-white border-gray-300 text-gray-900 disabled:bg-gray-100'
+              }`}
             >
               <option value="">All Batches</option>
               {batches.map(batch => (
@@ -390,20 +395,28 @@ const handleSelectAll = () => {
               ))}
             </select>
             {!localFilters.programId && (
-              <div className="text-xs text-gray-500 mt-1">Select program first</div>
+              <div className={`text-xs mt-1 ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>Select program first</div>
             )}
           </div>
 
           {/* Course Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
               Course
             </label>
             <select
               name="courseId"
               value={localFilters.courseId || ''}
               onChange={handleFilterChange}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
               <option value="">All Courses</option>
               {courses.map(course => (
@@ -416,14 +429,20 @@ const handleSelectAll = () => {
 
           {/* Status Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
               Status
             </label>
             <select
               name="status"
               value={localFilters.status || 'active'}
               onChange={handleFilterChange}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white' 
+                  : 'bg-white border-gray-300 text-gray-900'
+              }`}
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -433,7 +452,9 @@ const handleSelectAll = () => {
 
           {/* Search */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={`block text-sm font-medium mb-1 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
               Search
             </label>
             <input
@@ -442,13 +463,17 @@ const handleSelectAll = () => {
               value={localFilters.search || ''}
               onChange={handleSearchChange}
               placeholder="Name, email, ID..."
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                isDarkMode 
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                  : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+              }`}
             />
           </div>
         </div>
 
         <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-600">
+          <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
             {filteredStudents.length} students found
             {localFilters.programId && ` • Filter applied`}
           </div>
@@ -458,7 +483,10 @@ const handleSelectAll = () => {
               variant="outline"
               size="small"
               icon="fas fa-times"
-              className="border-gray-300 text-gray-700 hover:bg-gray-100"
+              className={isDarkMode 
+                ? 'border-gray-600 text-gray-300 hover:bg-gray-700' 
+                : 'border-gray-300 text-gray-700 hover:bg-gray-100'
+              }
             >
               Clear Filters
             </Button>
@@ -477,8 +505,12 @@ const handleSelectAll = () => {
       </div>
 
       {/* Students Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+      <div className={`rounded-lg border overflow-hidden ${
+        isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+      }`}>
+        <div className={`px-4 py-3 border-b flex items-center justify-between ${
+          isDarkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'
+        }`}>
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -487,23 +519,33 @@ const handleSelectAll = () => {
               disabled={filteredStudents.length === 0}
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded disabled:opacity-50"
             />
-            <span className="ml-2 text-sm font-medium text-gray-700">
+            <span className={`ml-2 text-sm font-medium ${
+              isDarkMode ? 'text-gray-200' : 'text-gray-700'
+            }`}>
               {selectedStudents.length === filteredStudents.length && filteredStudents.length > 0
                 ? 'Deselect All'
                 : 'Select All'} ({filteredStudents.length} students)
             </span>
           </div>
-          <div className="text-sm font-medium text-blue-600">
+          <div className={`text-sm font-medium ${
+            isDarkMode ? 'text-blue-400' : 'text-blue-600'
+          }`}>
             {selectedStudents.length} selected
           </div>
         </div>
 
         <div className="max-h-96 overflow-y-auto">
           {filteredStudents.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
+            <div className={`text-center py-12 ${
+              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+            }`}>
               <i className="fas fa-users text-3xl mb-4 opacity-30"></i>
-              <p className="mb-2 text-gray-700">No students found</p>
-              <p className="text-sm text-gray-500">
+              <p className={`mb-2 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                No students found
+              </p>
+              <p className={`text-sm ${
+                isDarkMode ? 'text-gray-400' : 'text-gray-500'
+              }`}>
                 {localFilters.programId || localFilters.batchId || localFilters.courseId 
                   ? 'Try adjusting your filters or click "Apply Filters"'
                   : 'Select filters to load students'}
@@ -511,22 +553,38 @@ const handleSelectAll = () => {
             </div>
           ) : (
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className={isDarkMode ? 'bg-gray-700' : 'bg-gray-50'}>
                 <tr>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Select</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Program & Batch</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Courses</th>
-                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                  <th className={`px-4 py-2 text-left text-xs font-medium uppercase ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                  }`}>Select</th>
+                  <th className={`px-4 py-2 text-left text-xs font-medium uppercase ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                  }`}>Student</th>
+                  <th className={`px-4 py-2 text-left text-xs font-medium uppercase ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                  }`}>Program & Batch</th>
+                  <th className={`px-4 py-2 text-left text-xs font-medium uppercase ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                  }`}>Courses</th>
+                  <th className={`px-4 py-2 text-left text-xs font-medium uppercase ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                  }`}>Status</th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody className={`divide-y ${
+                isDarkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-200'
+              }`}>
                 {filteredStudents.map(student => {
                   const isSelected = selectedStudents.some(s => s._id === student._id);
                   return (
                     <tr 
                       key={student._id} 
-                      className={`hover:bg-gray-50 cursor-pointer ${isSelected ? 'bg-blue-50' : ''}`}
+                      className={`cursor-pointer transition-colors ${
+                        isSelected
+                          ? isDarkMode ? 'bg-blue-900/20 hover:bg-blue-900/30' : 'bg-blue-50 hover:bg-blue-100'
+                          : isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                      }`}
                       onClick={() => handleStudentSelect(student)}
                     >
                       <td className="px-4 py-3 whitespace-nowrap">
@@ -540,18 +598,28 @@ const handleSelectAll = () => {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                            <i className="fas fa-user text-blue-600"></i>
+                          <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${
+                            isDarkMode ? 'bg-blue-900/30' : 'bg-blue-100'
+                          }`}>
+                            <i className={`fas fa-user ${
+                              isDarkMode ? 'text-blue-400' : 'text-blue-600'
+                            }`}></i>
                           </div>
                           <div className="ml-3">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className={`text-sm font-medium ${
+                              isDarkMode ? 'text-white' : 'text-gray-900'
+                            }`}>
                               {student.name || 'No Name'}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className={`text-sm ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`}>
                               {student.email || 'No Email'}
                             </div>
                             {student.studentCode && (
-                              <div className="text-xs text-gray-400">
+                              <div className={`text-xs ${
+                                isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                              }`}>
                                 ID: {student.studentCode}
                               </div>
                             )}
@@ -559,13 +627,16 @@ const handleSelectAll = () => {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                       
-                        <div className="text-s text-gray-500">
+                        <div className={`text-sm ${
+                          isDarkMode ? 'text-gray-300' : 'text-gray-500'
+                        }`}>
                           {student.batchId?.batchName || 'No Batch'} • {student.batchId?.batchCode || ''}
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="text-sm text-gray-900">
+                        <div className={`text-sm ${
+                          isDarkMode ? 'text-gray-200' : 'text-gray-900'
+                        }`}>
                           {student.enrolledCourseIds?.length > 0 
                             ? student.enrolledCourseIds.slice(0, 2).map(c => 
                                 typeof c === 'object' ? c.courseName : 'Course'
@@ -573,7 +644,9 @@ const handleSelectAll = () => {
                             : 'No courses'}
                         </div>
                         {student.enrolledCourseIds?.length > 2 && (
-                          <div className="text-xs text-blue-500">
+                          <div className={`text-xs ${
+                            isDarkMode ? 'text-blue-400' : 'text-blue-500'
+                          }`}>
                             +{student.enrolledCourseIds.length - 2} more
                           </div>
                         )}
@@ -581,8 +654,12 @@ const handleSelectAll = () => {
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                           student.isActive 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-gray-100 text-gray-800'
+                            ? isDarkMode
+                              ? 'bg-green-900/30 text-green-300 border border-green-800'
+                              : 'bg-green-100 text-green-800'
+                            : isDarkMode
+                              ? 'bg-gray-700 text-gray-300 border border-gray-600'
+                              : 'bg-gray-100 text-gray-800'
                         }`}>
                           {student.isActive ? 'Active' : 'Inactive'}
                         </span>

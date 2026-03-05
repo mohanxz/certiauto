@@ -1,9 +1,12 @@
+// src/modules/courses/CoursesTable.jsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
+import { useTheme } from "../../context/ThemeContext";
 
 const CoursesTable = ({ courses, onToggleStatus, onEdit }) => {
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
 
   const handleCourseClick = (course) => {
     if (course.isActive) {
@@ -20,7 +23,11 @@ const CoursesTable = ({ courses, onToggleStatus, onEdit }) => {
 
   return (
     <div 
-      className="overflow-x-auto bg-white rounded-xl border border-gray-200 shadow-sm relative custom-scrollbar"
+      className={`overflow-x-auto rounded-xl border shadow-sm relative custom-scrollbar ${
+        isDarkMode 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-white border-gray-200'
+      }`}
       style={{ maxHeight: 'calc(100vh - 140px)' }}
     >
       <style jsx>{`
@@ -30,37 +37,30 @@ const CoursesTable = ({ courses, onToggleStatus, onEdit }) => {
         }
         
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+          background: ${isDarkMode ? '#374151' : '#f3f4f6'};
           border-radius: 10px;
         }
         
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+          background: ${isDarkMode ? '#4B5563' : '#3b82f6'};
           border-radius: 10px;
-          border: 2px solid #f3f4f6;
+          border: 2px solid ${isDarkMode ? '#1F2937' : '#f3f4f6'};
           transition: all 0.3s ease;
         }
         
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-          transform: scale(1.05);
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:active {
-          background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+          background: ${isDarkMode ? '#6B7280' : '#2563eb'};
         }
         
         .custom-scrollbar::-webkit-scrollbar-corner {
-          background: #f3f4f6;
+          background: ${isDarkMode ? '#1F2937' : '#f3f4f6'};
         }
         
-        /* Firefox */
         .custom-scrollbar {
           scrollbar-width: thin;
-          scrollbar-color: #3b82f6 #f3f4f6;
+          scrollbar-color: ${isDarkMode ? '#4B5563 #374151' : '#3b82f6 #f3f4f6'};
         }
         
-        /* Smooth scrolling */
         .scroll-container {
           scroll-behavior: smooth;
           scrollbar-gutter: stable;
@@ -77,39 +77,49 @@ const CoursesTable = ({ courses, onToggleStatus, onEdit }) => {
       >
         <table className="min-w-full divide-y divide-gray-200">
           {/* Sticky header */}
-          <thead className="bg-gradient-to-r from-gray-50 to-blue-50 sticky -top-1 z-10 shadow-sm border-b border-blue-100">
+          <thead className={`
+            sticky -top-1 z-10 shadow-sm border-b
+            ${isDarkMode 
+              ? 'bg-gradient-to-r from-gray-700 to-gray-800 border-gray-600' 
+              : 'bg-gradient-to-r from-gray-50 to-blue-50 border-blue-100'
+            }
+          `}>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                isDarkMode ? 'text-blue-300' : 'text-blue-700'
+              }`}>
                 <div className="flex items-center">
                   <i className="fas fa-book mr-2"></i>
                   Course Name
                 </div>
               </th>
-              {/* <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
-                <div className="flex items-center">
-                  <i className="fas fa-align-left mr-2"></i>
-                  Description
-                </div>
-              </th> */}
-              <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                isDarkMode ? 'text-blue-300' : 'text-blue-700'
+              }`}>
                 <div className="flex items-center">
                   <i className="fas fa-toggle-on mr-2"></i>
                   Status
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                isDarkMode ? 'text-blue-300' : 'text-blue-700'
+              }`}>
                 <div className="flex items-center">
                   <i className="fas fa-layer-group mr-2"></i>
                   Batches
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                isDarkMode ? 'text-blue-300' : 'text-blue-700'
+              }`}>
                 <div className="flex items-center">
                   <i className="fas fa-users mr-2"></i>
                   Students
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                isDarkMode ? 'text-blue-300' : 'text-blue-700'
+              }`}>
                 <div className="flex items-center">
                   <i className="fas fa-cog mr-2"></i>
                   Actions
@@ -118,13 +128,20 @@ const CoursesTable = ({ courses, onToggleStatus, onEdit }) => {
             </tr>
           </thead>
 
-          <tbody className="bg-white divide-y divide-gray-100">
+          <tbody className={`divide-y ${
+            isDarkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-100'
+          }`}>
             {courses.map((course) => (
               <tr
                 key={course._id}
-                className={`hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-indigo-50/30 transition-all duration-150 ${
-                  !course.isActive ? "opacity-70" : "cursor-pointer"
-                }`}
+                className={`
+                  transition-all duration-150
+                  ${isDarkMode 
+                    ? 'hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-600' 
+                    : 'hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-indigo-50/30'
+                  }
+                  ${!course.isActive ? "opacity-70" : "cursor-pointer"}
+                `}
                 onClick={() => handleCourseClick(course)}
               >
                 {/* Course Info */}
@@ -134,23 +151,33 @@ const CoursesTable = ({ courses, onToggleStatus, onEdit }) => {
                       className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
                         course.isActive 
                           ? "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm" 
-                          : "bg-gray-100"
+                          : isDarkMode ? "bg-gray-600" : "bg-gray-100"
                       }`}
                     >
                       <i
                         className={`fas fa-graduation-cap ${
-                          course.isActive ? "text-white" : "text-gray-400"
+                          course.isActive ? "text-white" : isDarkMode ? "text-gray-300" : "text-gray-400"
                         }`}
                       ></i>
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                      <div className={`text-sm font-semibold flex items-center gap-2 ${
+                        isDarkMode ? 'text-white' : 'text-gray-900'
+                      }`}>
                         {course.courseName}
                         {course.isActive && (
-                          <i className="fas fa-external-link-alt text-xs text-blue-500"></i>
+                          <i className={`fas fa-external-link-alt text-xs ${
+                            isDarkMode ? 'text-blue-400' : 'text-blue-500'
+                          }`}></i>
                         )}
                       </div>
-                      <div className="text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full inline-block mt-1">
+                      <div className={`
+                        text-xs font-medium px-2 py-0.5 rounded-full inline-block mt-1
+                        ${isDarkMode 
+                          ? 'text-blue-300 bg-blue-900/20' 
+                          : 'text-blue-600 bg-blue-50'
+                        }
+                      `}>
                         <i className="fas fa-hashtag mr-1"></i>
                         {course.courseCode || "No code"}
                       </div>
@@ -158,23 +185,18 @@ const CoursesTable = ({ courses, onToggleStatus, onEdit }) => {
                   </div>
                 </td>
 
-                {/* Description */}
-                {/* <td className="px-6 py-4">
-                  <div className="text-sm text-gray-600 line-clamp-2 max-w-xs">
-                    {course.description || (
-                      <span className="text-gray-400 italic">No description</span>
-                    )}
-                  </div>
-                </td> */}
-
                 {/* Status */}
                 <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center space-x-3">
                     <span
                       className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
                         course.isActive
-                          ? "bg-gradient-to-r from-green-100 to-emerald-100 text-emerald-800 border border-green-200"
-                          : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-200"
+                          ? isDarkMode
+                            ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/30 text-green-300 border border-green-800'
+                            : 'bg-gradient-to-r from-green-100 to-emerald-100 text-emerald-800 border border-green-200'
+                          : isDarkMode
+                            ? 'bg-gradient-to-r from-gray-700 to-gray-600 text-gray-300 border border-gray-600'
+                            : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-200'
                       }`}
                     >
                       <i className={`fas fa-circle mr-1.5 text-${course.isActive ? 'green' : 'gray'}-500 text-xs`}></i>
@@ -194,13 +216,15 @@ const CoursesTable = ({ courses, onToggleStatus, onEdit }) => {
                       <div
                         className={`w-10 h-5 rounded-full relative transition-colors shadow-inner ${
                           course.isActive 
-                            ? "bg-gradient-to-r from-green-500 to-emerald-600" 
-                            : "bg-gradient-to-r from-gray-300 to-gray-400"
+                            ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
+                            : isDarkMode
+                              ? 'bg-gradient-to-r from-gray-600 to-gray-700'
+                              : 'bg-gradient-to-r from-gray-300 to-gray-400'
                         }`}
                       >
                         <span
                           className={`absolute left-1 top-0.5 w-4 h-4 bg-white rounded-full transition-transform shadow-md ${
-                            course.isActive ? "translate-x-5" : ""
+                            course.isActive ? 'translate-x-5' : ''
                           }`}
                         />
                       </div>
@@ -213,8 +237,12 @@ const CoursesTable = ({ courses, onToggleStatus, onEdit }) => {
                   <span
                     className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
                       course.isActive
-                        ? "bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-200 shadow-sm"
-                        : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-500 border border-gray-200"
+                        ? isDarkMode
+                          ? 'bg-gradient-to-r from-blue-900/30 to-indigo-900/30 text-blue-300 border border-blue-800 shadow-sm'
+                          : 'bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 border border-blue-200 shadow-sm'
+                        : isDarkMode
+                          ? 'bg-gradient-to-r from-gray-700 to-gray-600 text-gray-400 border border-gray-600'
+                          : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-500 border border-gray-200'
                     }`}
                   >
                     <i className="fas fa-layer-group mr-1.5"></i>
@@ -227,11 +255,17 @@ const CoursesTable = ({ courses, onToggleStatus, onEdit }) => {
                   <button
                     onClick={(e) => handleViewStudentsClick(e, course)}
                     disabled={!course.isActive}
-                    className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200 ${
-                      course.isActive
-                        ? "bg-gradient-to-r from-green-100 to-emerald-100 text-emerald-800 hover:from-green-200 hover:to-emerald-200 hover:shadow-md border border-green-200 transform hover:scale-105"
-                        : "bg-gradient-to-r from-gray-100 to-gray-200 text-gray-400 border border-gray-200 cursor-not-allowed"
-                    }`}
+                    className={`
+                      inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold transition-all duration-200
+                      ${course.isActive
+                        ? isDarkMode
+                          ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/30 text-green-300 hover:from-green-900/50 hover:to-emerald-900/50 hover:shadow-md border border-green-800 transform hover:scale-105'
+                          : 'bg-gradient-to-r from-green-100 to-emerald-100 text-emerald-800 hover:from-green-200 hover:to-emerald-200 hover:shadow-md border border-green-200 transform hover:scale-105'
+                        : isDarkMode
+                          ? 'bg-gradient-to-r from-gray-700 to-gray-600 text-gray-500 border border-gray-600 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-400 border border-gray-200 cursor-not-allowed'
+                      }
+                    `}
                   >
                     <i className="fas fa-users mr-1.5"></i>
                     {course.studentCount || 0} student{course.studentCount !== 1 ? 's' : ''}
@@ -245,7 +279,13 @@ const CoursesTable = ({ courses, onToggleStatus, onEdit }) => {
                       onClick={() => onEdit(course)}
                       size="sm"
                       disabled={!course.isActive}
-                      className="px-2.5 py-1.5  mx-5 text-gray-500 hover:text-blue-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 border border-gray-200 hover:border-blue-200 shadow-sm transform hover:scale-105 transition-all duration-200"
+                      className={`
+                        px-2.5 py-1.5 mx-5 transform hover:scale-105 transition-all duration-200
+                        ${isDarkMode 
+                          ? 'text-gray-300 hover:text-blue-300 bg-gray-700 hover:bg-gray-600 border border-gray-600 hover:border-blue-700' 
+                          : 'text-gray-500 hover:text-blue-600 bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 border border-gray-200 hover:border-blue-200 shadow-sm'
+                        }
+                      `}
                       title="Edit Course"
                     >
                       <i className="fas fa-edit"></i>

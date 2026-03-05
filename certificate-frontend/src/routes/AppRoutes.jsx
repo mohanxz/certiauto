@@ -1,3 +1,4 @@
+// AppRoutes.jsx - Updated with Email Details Route
 import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext";
@@ -7,7 +8,7 @@ import MainLayout from "../layouts/MainLayout";
 import Login from "../modules/auth/Login";
 import Signup from "../modules/auth/Signup";
 
-import Dashboard from '../modules/dashboard/Dashboard';
+import Dashboard from "../modules/dashboard/Dashboard";
 
 import ProgramsList from "../modules/programs/ProgramsList";
 import CoursesList from "../modules/courses/CoursesList";
@@ -26,6 +27,9 @@ import EmailLogsList from "../modules/mailLogs/EmailLogsList";
 import BulkUploadLogs from "../modules/bulkUpload/BulkUploadLogs";
 
 import EmailConfigList from "../modules/emailConfig/EmailConfigList";
+
+// Import the Email Details Page
+import EmailDetailsPage from "../modules/students/EmailDetailsModal";
 
 const AppRoutes = () => {
   const { user, loading } = useAuth();
@@ -61,7 +65,13 @@ const AppRoutes = () => {
         <Route path="/programs" element={<ProgramsList />} />
         <Route path="/courses" element={<CoursesList />} />
         <Route path="/batches" element={<BatchesList />} />
+
+        {/* Student Routes */}
         <Route path="/students" element={<StudentsList />} />
+        <Route
+          path="/students/:studentId/emails"
+          element={<EmailDetailsPage />}
+        />
 
         <Route path="/templates" element={<TemplatesList />} />
         <Route path="/mail-templates" element={<MailTemplatesList />} />

@@ -1,3 +1,4 @@
+// src/modules/dashboard/Dashboard.jsx
 import React, { useState, useEffect } from 'react';
 import Card, { CardBody } from '../../components/ui/Card';
 import { programAPI } from '../../api/programs';
@@ -7,6 +8,7 @@ import { studentAPI } from '../../api/students';
 import { mailLogsAPI } from '../../api/mailLog';
 import bulkUploadAPI from '../../api/bulkUpload';
 import { format, subDays } from 'date-fns';
+import { useTheme } from '../../context/ThemeContext';
 import {
   LineChart,
   Line,
@@ -21,6 +23,7 @@ import {
 } from 'recharts';
 
 const Dashboard = () => {
+  const { isDarkMode } = useTheme();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalCourses: 0,
@@ -206,7 +209,7 @@ const Dashboard = () => {
   const generateEnrollmentTrend = (students) => {
     const today = new Date();
     const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = subDays(today, 6 - i); // Show last 7 days in order
+      const date = subDays(today, 6 - i);
       return {
         label: format(date, 'EEE'),
         fullDate: format(date, 'MMM dd, yyyy'),
@@ -216,7 +219,6 @@ const Dashboard = () => {
       };
     });
 
-    // Count students enrolled on each of the last 7 days
     return last7Days.map(day => {
       const enrolledCount = students.filter(student => {
         if (!student.createdAt) return false;
@@ -241,21 +243,35 @@ const Dashboard = () => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-white p-4 border border-gray-200 shadow-xl rounded-lg">
-          <p className="font-bold text-gray-900">{data.fullDate}</p>
+        <div className={`
+          p-4 border shadow-xl rounded-lg transition-colors duration-200
+          ${isDarkMode 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border-gray-200'
+          }
+        `}>
+          <p className={`font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+            {data.fullDate}
+          </p>
           <div className="mt-2 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Day</span>
-              <span className="text-sm font-semibold text-gray-900">{data.name}</span>
+              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Day</span>
+              <span className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+                {data.name}
+              </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Enrollments</span>
-              <span className="text-lg font-bold text-purple-600">{data.enrollments}</span>
+              <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Enrollments</span>
+              <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                {data.enrollments}
+              </span>
             </div>
             {data.isWeekend && (
               <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600">Note</span>
-                <span className="text-xs text-yellow-600 bg-yellow-50 px-2 py-1 rounded">Weekend</span>
+                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Note</span>
+                <span className="text-xs text-yellow-600 bg-yellow-50 dark:bg-yellow-900/30 dark:text-yellow-400 px-2 py-1 rounded">
+                  Weekend
+                </span>
               </div>
             )}
           </div>
@@ -345,27 +361,31 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-    
     const interval = setInterval(fetchDashboardData, 60000);
-    
     return () => clearInterval(interval);
   }, []);
 
   if (loading) {
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-          <p className="text-gray-600">Loading dashboard data...</p>
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+              Dashboard
+            </h1>
+            <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              Loading dashboard data...
+            </p>
+          </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i}>
               <CardBody>
                 <div className="animate-pulse">
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                  <div className="h-8 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                  <div className={`h-4 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-1/2 mb-2`}></div>
+                  <div className={`h-8 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-3/4 mb-2`}></div>
+                  <div className={`h-3 ${isDarkMode ? 'bg-gray-700' : 'bg-gray-200'} rounded w-1/3`}></div>
                 </div>
               </CardBody>
             </Card>
@@ -376,14 +396,13 @@ const Dashboard = () => {
   }
 
   const statsData = [
-     {
+    {
       title: 'Total Programs',
       value: stats.totalPrograms.toString(),
       icon: 'fas fa-school',
       color: 'bg-indigo-500',
       change: 'Academic programs',
     },
-
     {
       title: 'Total Batches',
       value: stats.activeBatches.toString(),
@@ -398,7 +417,6 @@ const Dashboard = () => {
       color: 'bg-blue-500',
       change: `Active: ${stats.activeCourses} | Inactive: ${stats.inactiveCourses}`,
     },
-    
     {
       title: 'Total Students',
       value: stats.totalStudents.toString(),
@@ -408,7 +426,6 @@ const Dashboard = () => {
     }
   ];
 
-  // Calculate enrollment analytics
   const enrollmentAnalytics = enrollmentTrend.length > 0 ? {
     totalEnrollments: enrollmentTrend.reduce((sum, day) => sum + day.enrollments, 0),
     averageEnrollments: Math.round(enrollmentTrend.reduce((sum, day) => sum + day.enrollments, 0) / enrollmentTrend.length),
@@ -420,9 +437,15 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-gray-600">Real-time insights from your certificate management system</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            Dashboard
+          </h1>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Real-time insights from your certificate management system
+          </p>
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -432,9 +455,15 @@ const Dashboard = () => {
             <CardBody>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                  <p className="text-2xl font-bold text-gray-800 mt-1">{stat.value}</p>
-                  <p className="text-xs text-gray-600 mt-1">{stat.change}</p>
+                  <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {stat.title}
+                  </p>
+                  <p className={`text-2xl font-bold mt-1 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                    {stat.value}
+                  </p>
+                  <p className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    {stat.change}
+                  </p>
                 </div>
                 <div className={`${stat.color} w-12 h-12 rounded-lg flex items-center justify-center`}>
                   <i className={`${stat.icon} text-white text-xl`}></i>
@@ -445,22 +474,32 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Enrollment Trend Chart - Full Width with Analytics */}
+      {/* Enrollment Trend Chart */}
       <Card className="w-full">
-        <div className="px-6 py-4 border-b border-gray-100">
+        <div className={`px-6 py-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">Weekly Enrollment Analytics</h3>
-              <p className="text-sm text-gray-600">Last 7 days student enrollment trend and analysis</p>
+              <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                Weekly Enrollment Analytics
+              </h3>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                Last 7 days student enrollment trend and analysis
+              </p>
             </div>
             <div className="flex items-center gap-4">
               <div className="flex items-center space-x-2">
                 <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-                <span className="text-sm text-gray-600">Daily Enrollments</span>
+                <span className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Daily Enrollments
+                </span>
               </div>
               <button 
                 onClick={fetchDashboardData}
-                className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                className={`text-sm flex items-center gap-1 transition-colors
+                  ${isDarkMode 
+                    ? 'text-indigo-400 hover:text-indigo-300' 
+                    : 'text-blue-600 hover:text-blue-800'
+                  }`}
               >
                 <i className="fas fa-sync-alt"></i>
                 Refresh
@@ -473,11 +512,13 @@ const Dashboard = () => {
           {/* Analytics Summary */}
           {enrollmentAnalytics && (
             <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl border border-blue-200">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-blue-700">Total Enrollments</p>
-                    <p className="text-2xl font-bold text-gray-800">{enrollmentAnalytics.totalEnrollments}</p>
+                    <p className="text-xs font-medium text-blue-700 dark:text-blue-300">Total Enrollments</p>
+                    <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {enrollmentAnalytics.totalEnrollments}
+                    </p>
                   </div>
                   <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
                     <i className="fas fa-users text-white"></i>
@@ -485,11 +526,13 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-xl border border-green-200">
+              <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 p-4 rounded-xl border border-green-200 dark:border-green-800">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-green-700">Daily Average</p>
-                    <p className="text-2xl font-bold text-gray-800">{enrollmentAnalytics.averageEnrollments}</p>
+                    <p className="text-xs font-medium text-green-700 dark:text-green-300">Daily Average</p>
+                    <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {enrollmentAnalytics.averageEnrollments}
+                    </p>
                   </div>
                   <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
                     <i className="fas fa-chart-line text-white"></i>
@@ -497,12 +540,14 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-xl border border-purple-200">
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 p-4 rounded-xl border border-purple-200 dark:border-purple-800">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-purple-700">Peak Day</p>
-                    <p className="text-2xl font-bold text-gray-800">{enrollmentAnalytics.peakEnrollments}</p>
-                    <p className="text-xs text-purple-600">on {enrollmentAnalytics.peakDay}</p>
+                    <p className="text-xs font-medium text-purple-700 dark:text-purple-300">Peak Day</p>
+                    <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                      {enrollmentAnalytics.peakEnrollments}
+                    </p>
+                    <p className="text-xs text-purple-600 dark:text-purple-400">on {enrollmentAnalytics.peakDay}</p>
                   </div>
                   <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
                     <i className="fas fa-arrow-up text-white"></i>
@@ -510,133 +555,151 @@ const Dashboard = () => {
                 </div>
               </div>
               
-              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-4 rounded-xl border border-yellow-200">
+              <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-900/30 dark:to-yellow-800/30 p-4 rounded-xl border border-yellow-200 dark:border-yellow-800">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-xs font-medium text-yellow-700">Growth Rate</p>
-                    <p className={`text-2xl font-bold ${enrollmentAnalytics.growthRate >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <p className="text-xs font-medium text-yellow-700 dark:text-yellow-300">Growth Rate</p>
+                    <p className={`text-2xl font-bold ${
+                      enrollmentAnalytics.growthRate >= 0 
+                        ? 'text-green-600 dark:text-green-400' 
+                        : 'text-red-600 dark:text-red-400'
+                    }`}>
                       {enrollmentAnalytics.growthRate >= 0 ? '+' : ''}{enrollmentAnalytics.growthRate}%
                     </p>
                   </div>
-                   <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
                     <i className="fas fa-chart-line text-white"></i>
                   </div>
-                
                 </div>
               </div>
             </div>
           )}
 
-         <div className="h-96">
-  {enrollmentTrend.length > 0 ? (
-    <ResponsiveContainer width="100%" height="100%">
-      <AreaChart
-        data={enrollmentTrend}
-        margin={{
-          top: 20,
-          right: 30,
-          left: 20,
-          bottom: 20,
-        }}
-      >
-        <defs>
-          <linearGradient id="colorEnrollments" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#93c5fd" stopOpacity={0.9} />
-            <stop offset="50%" stopColor="#60a5fa" stopOpacity={0.4} />
-            <stop offset="95%" stopColor="#1e3a8a" stopOpacity={0} />
-          </linearGradient>
-        </defs>
+          <div className="h-96">
+            {enrollmentTrend.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart
+                  data={enrollmentTrend}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                >
+                  <defs>
+                    <linearGradient id="colorEnrollments" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#93c5fd" stopOpacity={0.9} />
+                      <stop offset="50%" stopColor="#60a5fa" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#1e3a8a" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
 
-        <CartesianGrid
-          strokeDasharray="3 3"
-          stroke="#e0ecff"
-          vertical={false}
-        />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke={isDarkMode ? '#374151' : '#e0ecff'}
+                    vertical={false}
+                  />
 
-        <XAxis
-          dataKey="name"
-          axisLine={false}
-          tickLine={false}
-          tick={{ fill: '#60a5fa', fontSize: 13, fontWeight: 500 }}
-          padding={{ left: 10, right: 10 }}
-        />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: isDarkMode ? '#9CA3AF' : '#60a5fa', fontSize: 13, fontWeight: 500 }}
+                    padding={{ left: 10, right: 10 }}
+                  />
 
-        <YAxis
-          axisLine={false}
-          tickLine={false}
-          tick={{ fill: '#93c5fd', fontSize: 12 }}
-          width={40}
-        />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: isDarkMode ? '#9CA3AF' : '#93c5fd', fontSize: 12 }}
+                    width={40}
+                  />
 
-        <RechartsTooltip
-          content={<CustomLineTooltip />}
-          wrapperStyle={{ outline: 'none' }}
-        />
+                  <RechartsTooltip
+                    content={<CustomLineTooltip />}
+                    wrapperStyle={{ outline: 'none' }}
+                  />
 
-        <Legend
-          verticalAlign="top"
-          height={36}
-        />
+                  <Legend
+                    verticalAlign="top"
+                    height={36}
+                    formatter={(value) => (
+                      <span className={isDarkMode ? 'text-gray-300' : 'text-gray-600'}>
+                        {value}
+                      </span>
+                    )}
+                  />
 
-        <Area
-          type="monotone"
-          dataKey="enrollments"
-          stroke="#3b82f6"
-          strokeWidth={3}
-          fillOpacity={1}
-          fill="url(#colorEnrollments)"
-          activeDot={{ r: 8, strokeWidth: 0 }}
-          name="Enrollments"
-        />
+                  <Area
+                    type="monotone"
+                    dataKey="enrollments"
+                    stroke="#3b82f6"
+                    strokeWidth={3}
+                    fillOpacity={1}
+                    fill="url(#colorEnrollments)"
+                    activeDot={{ r: 8, strokeWidth: 0 }}
+                    name="Enrollments"
+                  />
 
-        {enrollmentAnalytics && (
-          <Line
-            type="monotone"
-            dataKey={() => enrollmentAnalytics.averageEnrollments}
-            stroke="#7dd3fc"
-            strokeWidth={2}
-            strokeDasharray="5 5"
-            dot={false}
-            name="7-day Average"
-          />
-        )}
-      </AreaChart>
-    </ResponsiveContainer>
-  ) : (
-    <div className="h-full flex flex-col items-center justify-center">
-      <i className="fas fa-chart-line text-5xl text-blue-200 mb-4"></i>
-      <p className="text-blue-500 text-lg mb-2">
-        No enrollment data available
-      </p>
-      <p className="text-blue-400 text-sm">
-        Student enrollment data will appear here
-      </p>
-    </div>
-  )}
-</div>
-
+                  {enrollmentAnalytics && (
+                    <Line
+                      type="monotone"
+                      dataKey={() => enrollmentAnalytics.averageEnrollments}
+                      stroke="#7dd3fc"
+                      strokeWidth={2}
+                      strokeDasharray="5 5"
+                      dot={false}
+                      name="7-day Average"
+                    />
+                  )}
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center">
+                <i className="fas fa-chart-line text-5xl text-blue-200 dark:text-blue-800 mb-4"></i>
+                <p className={`text-lg mb-2 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`}>
+                  No enrollment data available
+                </p>
+                <p className={`text-sm ${isDarkMode ? 'text-blue-400/70' : 'text-blue-400'}`}>
+                  Student enrollment data will appear here
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Day-by-Day Breakdown */}
           {enrollmentTrend.length > 0 && (
             <div className="mt-8">
-              <h4 className="text-sm font-semibold text-gray-700 mb-4">Daily Breakdown</h4>
+              <h4 className={`text-sm font-semibold mb-4 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                Daily Breakdown
+              </h4>
               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
                 {enrollmentTrend.map((day, index) => (
                   <div 
                     key={index} 
                     className={`p-3 rounded-lg border ${
                       day.isWeekend 
-                        ? 'bg-yellow-50 border-yellow-200' 
-                        : 'bg-gray-50 border-gray-200'
+                        ? isDarkMode
+                          ? 'bg-yellow-900/20 border-yellow-800'
+                          : 'bg-yellow-50 border-yellow-200'
+                        : isDarkMode
+                          ? 'bg-gray-800 border-gray-700'
+                          : 'bg-gray-50 border-gray-200'
                     }`}
                   >
                     <div className="flex flex-col items-center">
-                      <span className="text-xs font-medium text-gray-500">{day.name}</span>
-                      <span className="text-xs text-gray-400">{day.month} {day.day}</span>
-                      <span className="text-xl font-bold text-gray-800 mt-2">{day.enrollments}</span>
-                      <span className="text-xs text-gray-500 mt-1">enrollments</span>
+                      <span className={`text-xs font-medium ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {day.name}
+                      </span>
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                        {day.month} {day.day}
+                      </span>
+                      <span className={`text-xl font-bold mt-2 ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+                        {day.enrollments}
+                      </span>
+                      <span className={`text-xs mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        enrollments
+                      </span>
                       {day.isWeekend && (
-                        <span className="text-xs text-yellow-600 mt-1 flex items-center">
+                        <span className={`text-xs mt-1 flex items-center ${
+                          isDarkMode ? 'text-yellow-400' : 'text-yellow-600'
+                        }`}>
                           <i className="fas fa-star mr-1"></i>Weekend
                         </span>
                       )}
@@ -651,11 +714,17 @@ const Dashboard = () => {
 
       {/* Recent Activities */}
       <Card>
-        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">Recent Activities</h3>
+        <div className={`px-6 py-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'} flex justify-between items-center`}>
+          <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            Recent Activities
+          </h3>
           <button 
             onClick={fetchDashboardData}
-            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+            className={`text-sm flex items-center gap-1 transition-colors
+              ${isDarkMode 
+                ? 'text-indigo-400 hover:text-indigo-300' 
+                : 'text-blue-600 hover:text-blue-800'
+              }`}
           >
             <i className="fas fa-sync-alt"></i>
             Refresh
@@ -665,31 +734,37 @@ const Dashboard = () => {
           <div className="space-y-4">
             {recentActivities.length > 0 ? (
               recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-start hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                <div 
+                  key={activity.id} 
+                  className={`flex items-start p-2 rounded-lg transition-colors
+                    ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-50'}`}
+                >
                   <div className="flex-shrink-0">
                     <div className="w-8 h-8 rounded-full flex items-center justify-center"
                       style={{
-                        backgroundColor: activity.type === 'campaign' ? '#dbeafe' :
-                                        activity.type === 'upload' ? '#d1fae5' :
-                                        activity.type === 'enrollment' ? '#f3e8ff' : '#fef3c7'
+                        backgroundColor: activity.type === 'campaign' ? isDarkMode ? '#1e3a8a' : '#dbeafe' :
+                                        activity.type === 'upload' ? isDarkMode ? '#065f46' : '#d1fae5' :
+                                        activity.type === 'enrollment' ? isDarkMode ? '#5b21b6' : '#f3e8ff' : isDarkMode ? '#92400e' : '#fef3c7'
                       }}
                     >
                       <i className={`${activity.icon} text-sm ${
-                        activity.type === 'campaign' ? 'text-blue-600' :
-                        activity.type === 'upload' ? 'text-green-600' :
-                        activity.type === 'enrollment' ? 'text-purple-600' : 'text-yellow-600'
+                        activity.type === 'campaign' ? isDarkMode ? 'text-blue-300' : 'text-blue-600' :
+                        activity.type === 'upload' ? isDarkMode ? 'text-green-300' : 'text-green-600' :
+                        activity.type === 'enrollment' ? isDarkMode ? 'text-purple-300' : 'text-purple-600' : isDarkMode ? 'text-yellow-300' : 'text-yellow-600'
                       }`}></i>
                     </div>
                   </div>
                   <div className="ml-3 flex-1">
-                    <p className="text-sm text-gray-800">{activity.activity}</p>
+                    <p className={`text-sm ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                      {activity.activity}
+                    </p>
                     <div className="flex items-center mt-1">
-                      <span className="text-xs text-gray-500">
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         <i className="fas fa-user mr-1"></i>
                         {activity.user}
                       </span>
-                      <span className="mx-2 text-gray-300">•</span>
-                      <span className="text-xs text-gray-500">
+                      <span className={`mx-2 ${isDarkMode ? 'text-gray-600' : 'text-gray-300'}`}>•</span>
+                      <span className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         <i className="far fa-clock mr-1"></i>
                         {activity.time}
                       </span>
@@ -699,8 +774,10 @@ const Dashboard = () => {
               ))
             ) : (
               <div className="text-center py-4">
-                <i className="fas fa-inbox text-3xl text-gray-300 mb-2"></i>
-                <p className="text-gray-500">No recent activities found</p>
+                <i className={`fas fa-inbox text-3xl ${isDarkMode ? 'text-gray-600' : 'text-gray-300'} mb-2`}></i>
+                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  No recent activities found
+                </p>
               </div>
             )}
           </div>
@@ -709,36 +786,68 @@ const Dashboard = () => {
 
       {/* Quick Actions */}
       <Card>
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800">Quick Actions</h3>
+        <div className={`px-6 py-4 border-b ${isDarkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+          <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            Quick Actions
+          </h3>
         </div>
         <CardBody>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <a 
               href="/courses"
-              className="p-4 bg-blue-50 hover:bg-blue-100 rounded-lg text-center transition-colors block"
+              className={`p-4 rounded-lg text-center transition-colors block
+                ${isDarkMode 
+                  ? 'bg-blue-900/20 hover:bg-blue-900/30 border border-blue-800' 
+                  : 'bg-blue-50 hover:bg-blue-100'
+                }`}
             >
-              <i className="fas fa-graduation-cap text-blue-600 text-2xl mb-2"></i>
-              <p className="font-medium text-gray-800">Manage Courses</p>
-              <p className="text-sm text-gray-600">View and edit all courses</p>
+              <i className={`fas fa-graduation-cap text-2xl mb-2 ${
+                isDarkMode ? 'text-blue-400' : 'text-blue-600'
+              }`}></i>
+              <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                Manage Courses
+              </p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                View and edit all courses
+              </p>
             </a>
             
             <a 
               href="/students"
-              className="p-4 bg-green-50 hover:bg-green-100 rounded-lg text-center transition-colors block"
+              className={`p-4 rounded-lg text-center transition-colors block
+                ${isDarkMode 
+                  ? 'bg-green-900/20 hover:bg-green-900/30 border border-green-800' 
+                  : 'bg-green-50 hover:bg-green-100'
+                }`}
             >
-              <i className="fas fa-file-import text-green-600 text-2xl mb-2"></i>
-              <p className="font-medium text-gray-800">Import Students</p>
-              <p className="text-sm text-gray-600">Bulk import via Excel</p>
+              <i className={`fas fa-file-import text-2xl mb-2 ${
+                isDarkMode ? 'text-green-400' : 'text-green-600'
+              }`}></i>
+              <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                Import Students
+              </p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                Bulk import via Excel
+              </p>
             </a>
             
             <a 
               href="/batches"
-              className="p-4 bg-purple-50 hover:bg-purple-100 rounded-lg text-center transition-colors block"
+              className={`p-4 rounded-lg text-center transition-colors block
+                ${isDarkMode 
+                  ? 'bg-purple-900/20 hover:bg-purple-900/30 border border-purple-800' 
+                  : 'bg-purple-50 hover:bg-purple-100'
+                }`}
             >
-              <i className="fas fa-layer-group text-purple-600 text-2xl mb-2"></i>
-              <p className="font-medium text-gray-800">Manage Batches</p>
-              <p className="text-sm text-gray-600">View and manage batches</p>
+              <i className={`fas fa-layer-group text-2xl mb-2 ${
+                isDarkMode ? 'text-purple-400' : 'text-purple-600'
+              }`}></i>
+              <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
+                Manage Batches
+              </p>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                View and manage batches
+              </p>
             </a>
           </div>
         </CardBody>

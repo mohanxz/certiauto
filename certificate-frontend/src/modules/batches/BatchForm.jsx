@@ -1,7 +1,9 @@
+// src/modules/batches/BatchForm.jsx
 import React, { useState, useEffect } from 'react';
 import Button from '../../components/ui/Button';
 import { useToast } from '../../hooks/useToast';
 import { programAPI } from '../../api/programs';
+import { useTheme } from '../../context/ThemeContext';
 
 const BatchForm = ({ 
   onSubmit, 
@@ -10,6 +12,7 @@ const BatchForm = ({
   title = initialData ? 'Edit Batch' : 'Create New Batch'
 }) => {
   const { showToast } = useToast();
+  const { isDarkMode } = useTheme();
   
   const [formData, setFormData] = useState({
     batchName: '',
@@ -128,12 +131,19 @@ const BatchForm = ({
       <div className="flex items-center justify-center min-h-screen px-4 py-8">
         {/* Backdrop with gradient */}
         <div 
-          className="fixed inset-0 bg-gradient-to-br from-blue-50 via-white to-purple-50 opacity-95"
+          className={`fixed inset-0 transition-opacity duration-300 ${
+            isDarkMode 
+              ? 'bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95' 
+              : 'bg-gradient-to-br from-blue-50/95 via-white/95 to-purple-50/95'
+          }`}
           onClick={onClose}
         />
         
         {/* Modal Container */}
-        <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
+        <div className={`
+          relative rounded-2xl shadow-2xl w-full max-w-md transform transition-all
+          ${isDarkMode ? 'bg-gray-800' : 'bg-white'}
+        `}>
           {/* Header with gradient */}
           <div className="bg-gradient-to-r from-blue-600 to-blue-600 rounded-t-2xl px-8 py-6">
             <div className="flex justify-between items-center">
@@ -161,7 +171,9 @@ const BatchForm = ({
             <div className="space-y-6">
               {/* Batch Name Field */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className={`block text-sm font-semibold ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   <i className="fas fa-users mr-2 text-purple-500"></i>
                   Batch Name *
                 </label>
@@ -173,18 +185,23 @@ const BatchForm = ({
                     onChange={handleChange}
                     placeholder="e.g., Web Development Jan 2024"
                     disabled={loading}
-                    className={`block w-full rounded-xl border-2 ${
-                      errors.batchName 
+                    className={`
+                      block w-full rounded-xl border-2 px-4 py-3.5 focus:outline-none focus:ring-4 transition-all duration-200
+                      ${errors.batchName 
                         ? 'border-red-300 focus:border-red-500 focus:ring-red-200' 
-                        : 'border-gray-200 focus:border-purple-500 focus:ring-purple-200'
-                    } px-4 py-3.5 focus:outline-none focus:ring-4 transition-all duration-200 ${
-                      loading ? 'bg-gray-50' : 'bg-white hover:border-purple-400'
-                    }`}
+                        : isDarkMode
+                          ? 'border-gray-600 bg-gray-700 text-white placeholder-gray-400 focus:border-purple-500 focus:ring-purple-500/20'
+                          : 'border-gray-200 bg-white text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-purple-200'
+                      }
+                      ${loading ? 'opacity-60 cursor-not-allowed' : 'hover:border-purple-400'}
+                    `}
                     required
                   />
                 </div>
                 {errors.batchName && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <p className={`mt-1 text-sm flex items-center ${
+                    isDarkMode ? 'text-red-400' : 'text-red-600'
+                  }`}>
                     <i className="fas fa-exclamation-circle mr-1.5"></i>
                     {errors.batchName}
                   </p>
@@ -193,7 +210,9 @@ const BatchForm = ({
 
               {/* Program Selection */}
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
+                <label className={`block text-sm font-semibold ${
+                  isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   <i className="fas fa-graduation-cap mr-2 text-blue-500"></i>
                   Program *
                 </label>
@@ -203,73 +222,69 @@ const BatchForm = ({
                     value={formData.programId}
                     onChange={handleChange}
                     disabled={loading || Boolean(initialData) || loadingPrograms}
-                    className={`block w-full rounded-xl border-2 ${
-                      errors.programId 
+                    className={`
+                      block w-full rounded-xl border-2 px-4 py-3.5 focus:outline-none focus:ring-4 transition-all duration-200 appearance-none
+                      ${errors.programId 
                         ? 'border-red-300 focus:border-red-500 focus:ring-red-200' 
-                        : 'border-gray-200 focus:border-blue-500 focus:ring-blue-200'
-                    } px-4 py-3.5 focus:outline-none focus:ring-4 transition-all duration-200 appearance-none ${
-                      loading || initialData || loadingPrograms 
-                        ? 'bg-gray-50 cursor-not-allowed' 
-                        : 'bg-white cursor-pointer hover:border-blue-400'
-                    }`}
+                        : isDarkMode
+                          ? 'border-gray-600 bg-gray-700 text-white focus:border-blue-500 focus:ring-blue-500/20'
+                          : 'border-gray-200 bg-white text-gray-900 focus:border-blue-500 focus:ring-blue-200'
+                      }
+                      ${(loading || initialData || loadingPrograms) 
+                        ? 'opacity-60 cursor-not-allowed' 
+                        : isDarkMode ? 'hover:border-blue-400' : 'hover:border-blue-400'
+                      }
+                    `}
                     required
                   >
-                    <option value="" className="text-gray-400">Select a program</option>
+                    <option value="" className={isDarkMode ? 'bg-gray-700' : ''}>Select a program</option>
                     {loadingPrograms ? (
-                      <option value="" disabled className="text-gray-400">Loading programs...</option>
+                      <option value="" disabled className={isDarkMode ? 'bg-gray-700 text-gray-400' : ''}>Loading programs...</option>
                     ) : programs.length === 0 ? (
-                      <option value="" disabled className="text-gray-400">No programs available</option>
+                      <option value="" disabled className={isDarkMode ? 'bg-gray-700 text-gray-400' : ''}>No programs available</option>
                     ) : (
                       programs.map((program) => (
-                        <option key={program._id} value={program._id} className="py-2">
+                        <option key={program._id} value={program._id} className={isDarkMode ? 'bg-gray-700' : ''}>
                           {program.programName} {program.year ? `(${program.year})` : ''}
                         </option>
                       ))
                     )}
                   </select>
                   <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none">
-                    <i className={`fas fa-chevron-down ${loadingPrograms ? 'text-gray-400' : 'text-blue-500'}`}></i>
+                    <i className={`fas fa-chevron-down ${
+                      loadingPrograms 
+                        ? isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                        : isDarkMode ? 'text-blue-400' : 'text-blue-500'
+                    }`}></i>
                   </div>
                 </div>
                 {errors.programId && (
-                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <p className={`mt-1 text-sm flex items-center ${
+                    isDarkMode ? 'text-red-400' : 'text-red-600'
+                  }`}>
                     <i className="fas fa-exclamation-circle mr-1.5"></i>
                     {errors.programId}
                   </p>
                 )}
               </div>
-
-              {/* Description */}
-              {/* <div className="space-y-2">
-                <label className="block text-sm font-semibold text-gray-700">
-                  <i className="fas fa-align-left mr-2 text-green-500"></i>
-                  Description
-                </label>
-                <div className="relative group">
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    placeholder="Describe the batch, curriculum, or any special instructions..."
-                    rows={3}
-                    className="block w-full rounded-xl border-2 border-gray-200 focus:border-green-500 focus:ring-green-200 px-4 py-3.5 focus:outline-none focus:ring-4 transition-all duration-200 placeholder:text-gray-400 resize-none hover:border-green-400"
-                    disabled={loading}
-                  />
-                  <div className="absolute top-3 right-3 text-gray-400">
-                    <i className="fas fa-comment-dots"></i>
-                  </div>
-                </div>
-              </div> */}
             </div>
 
             {/* Form Actions */}
-            <div className="mt-8 pt-6 border-t border-gray-200">
+            <div className={`mt-8 pt-6 border-t ${
+              isDarkMode ? 'border-gray-700' : 'border-gray-200'
+            }`}>
               <div className="flex justify-between items-center">
                 <button
                   type="button"
                   onClick={onClose}
                   disabled={loading || loadingPrograms}
-                  className="flex items-center text-gray-600 hover:text-gray-800 hover:bg-gray-100 px-5 py-2.5 rounded-xl transition-all duration-200 font-medium"
+                  className={`
+                    flex items-center px-5 py-2.5 rounded-xl transition-all duration-200 font-medium
+                    ${isDarkMode 
+                      ? 'text-gray-300 hover:text-white hover:bg-gray-700' 
+                      : 'text-gray-600 hover:text-gray-800 hover:bg-gray-100'
+                    }
+                  `}
                 >
                   <i className="fas fa-arrow-left mr-2"></i>
                   Cancel

@@ -1,35 +1,35 @@
+// src/modules/programs/ProgramsList.jsx
 import React, { useState, useEffect } from 'react';
 import { programAPI } from '../../api/programs';
-import { batchAPI } from '../../api/batches'; // Add batchAPI import
+import { batchAPI } from '../../api/batches';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import EmptyState from '../../components/common/EmptyState';
 import Button from '../../components/ui/Button';
 import ProgramCard from './ProgramCard';
 import ProgramForm from './ProgramForm';
 import { useToast } from '../../hooks/useToast';
+import { useTheme } from '../../context/ThemeContext';
 
 const ProgramsList = () => {
   const [programs, setPrograms] = useState([]);
-  const [programBatches, setProgramBatches] = useState({}); // Store batches by programId
+  const [programBatches, setProgramBatches] = useState({});
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProgram, setEditingProgram] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const { showToast } = useToast();
+  const { isDarkMode } = useTheme();
 
   useEffect(() => {
     fetchPrograms();
   }, []);
 
-  // Fetch all programs
   const fetchPrograms = async () => {
     try {
       setLoading(true);
       const response = await programAPI.getAllPrograms();
       if (response.success) {
         setPrograms(response.data);
-        
-        // After fetching programs, fetch batches for each program
         fetchBatchesForPrograms(response.data);
       }
     } catch (error) {
@@ -39,12 +39,10 @@ const ProgramsList = () => {
     }
   };
 
-  // Fetch batches for each program
   const fetchBatchesForPrograms = async (programsList) => {
     try {
       const batchesMap = {};
       
-      // Fetch batches for each program in parallel
       await Promise.all(
         programsList.map(async (program) => {
           try {
@@ -68,7 +66,6 @@ const ProgramsList = () => {
     }
   };
 
-  // Get batch count for a specific program
   const getBatchCount = (programId) => {
     return programBatches[programId]?.length || 0;
   };
@@ -79,7 +76,7 @@ const ProgramsList = () => {
       if (response.success) {
         showToast('Program created successfully', 'success');
         setShowForm(false);
-        fetchPrograms(); // Refresh the list
+        fetchPrograms();
       }
     } catch (error) {
       showToast('Error creating program', 'error');
@@ -98,7 +95,7 @@ const ProgramsList = () => {
         showToast('Program updated successfully', 'success');
         setShowForm(false);
         setEditingProgram(null);
-        fetchPrograms(); // Refresh the list
+        fetchPrograms();
       }
     } catch (error) {
       showToast('Error updating program', 'error');
@@ -114,7 +111,7 @@ const ProgramsList = () => {
       const response = await programAPI.deleteProgram(programId);
       if (response.success) {
         showToast('Program deleted successfully', 'success');
-        fetchPrograms(); // Refresh the list
+        fetchPrograms();
       }
     } catch (error) {
       showToast('Error deleting program', 'error');
@@ -125,7 +122,6 @@ const ProgramsList = () => {
     program.programName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Calculate total batches across all programs
   const getStats = () => {
     const totalPrograms = programs.length;
     const totalBatches = Object.values(programBatches).reduce(
@@ -147,8 +143,12 @@ const ProgramsList = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Programs</h1>
-          <p className="text-gray-600">Manage your academic programs</p>
+          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+            Programs
+          </h1>
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            Manage your academic programs
+          </p>
         </div>
         
         <Button
@@ -164,9 +164,25 @@ const ProgramsList = () => {
         </Button>
       </div>
 
-  
-
-   
+    
+      {/* Search Bar */}
+      <div className="relative">
+        <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+        <input
+          type="text"
+          placeholder="Search programs..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className={`
+            w-full pl-10 pr-4 py-2 rounded-lg border transition-colors duration-300
+            focus:outline-none focus:ring-2 focus:ring-blue-500/50
+            ${isDarkMode 
+              ? 'bg-gray-800 border-gray-700 text-white placeholder-gray-400' 
+              : 'bg-white border-gray-300 text-gray-900 placeholder-gray-400'
+            }
+          `}
+        />
+      </div>
 
       {/* Programs Grid */}
       {filteredPrograms.length === 0 ? (
@@ -186,7 +202,7 @@ const ProgramsList = () => {
             <ProgramCard
               key={program._id}
               program={program}
-              batchCount={getBatchCount(program._id)} // Pass batch count
+              batchCount={getBatchCount(program._id)}
               onEdit={handleEditProgram}
               onDelete={handleDeleteProgram}
             />

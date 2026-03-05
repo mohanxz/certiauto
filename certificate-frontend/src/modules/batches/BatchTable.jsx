@@ -1,9 +1,12 @@
+// src/modules/batches/BatchTable.jsx
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Button from "../../components/ui/Button";
+import { useTheme } from '../../context/ThemeContext';
 
 const BatchTable = ({ batches, onToggleStatus, onEdit }) => {
   const navigate = useNavigate();
+  const { isDarkMode } = useTheme();
 
   const getCourseInfo = (batch) => {
     if (batch.courseId && typeof batch.courseId === 'object') {
@@ -25,7 +28,11 @@ const BatchTable = ({ batches, onToggleStatus, onEdit }) => {
 
   return (
     <div 
-      className="overflow-x-auto bg-white rounded-xl border border-gray-200 shadow-sm relative custom-scrollbar"
+      className={`overflow-x-auto rounded-xl border shadow-sm relative custom-scrollbar ${
+        isDarkMode 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-white border-gray-200'
+      }`}
       style={{ maxHeight: 'calc(100vh - 140px)' }}
     >
       <style jsx>{`
@@ -35,37 +42,30 @@ const BatchTable = ({ batches, onToggleStatus, onEdit }) => {
         }
         
         .custom-scrollbar::-webkit-scrollbar-track {
-          background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+          background: ${isDarkMode ? '#374151' : '#f3f4f6'};
           border-radius: 10px;
         }
         
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+          background: ${isDarkMode ? '#4B5563' : '#3b82f6'};
           border-radius: 10px;
-          border: 2px solid #f3f4f6;
+          border: 2px solid ${isDarkMode ? '#1F2937' : '#f3f4f6'};
           transition: all 0.3s ease;
         }
         
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-          transform: scale(1.05);
-        }
-        
-        .custom-scrollbar::-webkit-scrollbar-thumb:active {
-          background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
+          background: ${isDarkMode ? '#6B7280' : '#2563eb'};
         }
         
         .custom-scrollbar::-webkit-scrollbar-corner {
-          background: #f3f4f6;
+          background: ${isDarkMode ? '#1F2937' : '#f3f4f6'};
         }
         
-        /* Firefox */
         .custom-scrollbar {
           scrollbar-width: thin;
-          scrollbar-color: #3b82f6 #f3f4f6;
+          scrollbar-color: ${isDarkMode ? '#4B5563 #374151' : '#3b82f6 #f3f4f6'};
         }
         
-        /* Smooth scrolling */
         .scroll-container {
           scroll-behavior: smooth;
           scrollbar-gutter: stable;
@@ -82,45 +82,65 @@ const BatchTable = ({ batches, onToggleStatus, onEdit }) => {
       >
         <table className="min-w-full divide-y divide-gray-200">
           {/* Sticky header */}
-          <thead className="bg-gradient-to-r from-gray-50 to-blue-50 sticky -top-1 z-10 shadow-sm border-b border-blue-100">
+          <thead className={`
+            sticky -top-1 z-10 shadow-sm border-b
+            ${isDarkMode 
+              ? 'bg-gradient-to-r from-gray-700 to-gray-800 border-gray-600' 
+              : 'bg-gradient-to-r from-gray-50 to-blue-50 border-blue-100'
+            }
+          `}>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                isDarkMode ? 'text-blue-300' : 'text-blue-700'
+              }`}>
                 <div className="flex items-center">
                   <i className="fas fa-layer-group mr-2"></i>
                   Batch Name
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                isDarkMode ? 'text-blue-300' : 'text-blue-700'
+              }`}>
                 <div className="flex items-center">
                   <i className="fas fa-hashtag mr-2"></i>
                   Code
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                isDarkMode ? 'text-blue-300' : 'text-blue-700'
+              }`}>
                 <div className="flex items-center">
                   <i className="fas fa-project-diagram mr-2"></i>
                   Program
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                isDarkMode ? 'text-blue-300' : 'text-blue-700'
+              }`}>
                 <div className="flex items-center">
                   <i className="fas fa-toggle-on mr-2"></i>
                   Status
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                isDarkMode ? 'text-blue-300' : 'text-blue-700'
+              }`}>
                 <div className="flex items-center">
                   <i className="fas fa-graduation-cap mr-2"></i>
                   Courses
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                isDarkMode ? 'text-blue-300' : 'text-blue-700'
+              }`}>
                 <div className="flex items-center">
                   <i className="fas fa-calendar-plus mr-2"></i>
                   Created Date
                 </div>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-blue-700 uppercase tracking-wider">
+              <th className={`px-6 py-3 text-left text-xs font-medium uppercase tracking-wider ${
+                isDarkMode ? 'text-blue-300' : 'text-blue-700'
+              }`}>
                 <div className="flex items-center">
                   <i className="fas fa-cog mr-2"></i>
                   Actions
@@ -129,31 +149,44 @@ const BatchTable = ({ batches, onToggleStatus, onEdit }) => {
             </tr>
           </thead>
           
-          <tbody className="bg-white divide-y divide-gray-100">
+          <tbody className={`divide-y ${
+            isDarkMode ? 'bg-gray-800 divide-gray-700' : 'bg-white divide-gray-100'
+          }`}>
             {batches.map((batch) => (
               <tr 
                 key={batch._id} 
-                className={`hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-indigo-50/30 transition-all duration-200 ${
-                  !batch.isActive ? 'opacity-70' : ''
-                }`}
+                className={`
+                  transition-all duration-200
+                  ${isDarkMode 
+                    ? 'hover:bg-gradient-to-r hover:from-gray-700 hover:to-gray-600' 
+                    : 'hover:bg-gradient-to-r hover:from-blue-50/30 hover:to-indigo-50/30'
+                  }
+                  ${!batch.isActive ? 'opacity-70' : ''}
+                `}
               >
                 <td className="px-6 py-4">
                   <div className="flex items-center">
                     <div className={`w-10 h-10 rounded-lg flex items-center justify-center mr-3 ${
                       batch.isActive 
                         ? "bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm" 
-                        : "bg-gray-100"
+                        : isDarkMode ? "bg-gray-600" : "bg-gray-100"
                     }`}>
                       <i className={`fas fa-layer-group ${
-                        batch.isActive ? "text-white" : "text-gray-400"
+                        batch.isActive ? "text-white" : isDarkMode ? "text-gray-300" : "text-gray-400"
                       } text-sm`}></i>
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-gray-900">
+                      <div className={`text-sm font-semibold ${
+                        isDarkMode ? 'text-white' : 'text-gray-900'
+                      }`}>
                         {batch.batchName}
                       </div>
                       {batch.description && (
-                        <div className="text-xs text-gray-500 truncate max-w-xs bg-gray-50 p-1.5 rounded border border-gray-100 mt-1">
+                        <div className={`text-xs truncate max-w-xs p-1.5 rounded border mt-1 ${
+                          isDarkMode 
+                            ? 'text-gray-400 bg-gray-700 border-gray-600' 
+                            : 'text-gray-500 bg-gray-50 border-gray-100'
+                        }`}>
                           {batch.description}
                         </div>
                       )}
@@ -162,13 +195,19 @@ const BatchTable = ({ batches, onToggleStatus, onEdit }) => {
                 </td>
                 
                 <td className="px-6 py-4">
-                  <div className="text-sm font-mono font-medium text-blue-700 bg-blue-50 px-2.5 py-1 rounded border border-blue-100 inline-block">
+                  <div className={`
+                    text-sm font-mono font-medium px-2.5 py-1 rounded border inline-block
+                    ${isDarkMode 
+                      ? 'text-blue-300 bg-blue-900/20 border-blue-800' 
+                      : 'text-blue-700 bg-blue-50 border-blue-100'
+                    }
+                  `}>
                     {batch.batchCode || '-'}
                   </div>
                 </td>
                 
                 <td className="px-6 py-4">
-                  <div className="text-sm text-gray-700">
+                  <div className={`text-sm ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     {getProgramInfo(batch)}
                   </div>
                 </td>
@@ -177,8 +216,12 @@ const BatchTable = ({ batches, onToggleStatus, onEdit }) => {
                   <div className="flex items-center space-x-3">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
                       batch.isActive 
-                        ? 'bg-gradient-to-r from-green-100 to-emerald-100 text-emerald-800 border border-green-200' 
-                        : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-200'
+                        ? isDarkMode
+                          ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/30 text-green-300 border border-green-800'
+                          : 'bg-gradient-to-r from-green-100 to-emerald-100 text-emerald-800 border border-green-200'
+                        : isDarkMode
+                          ? 'bg-gradient-to-r from-gray-700 to-gray-600 text-gray-300 border border-gray-600'
+                          : 'bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 border border-gray-200'
                     }`}>
                       <i className={`fas fa-circle mr-1.5 text-${batch.isActive ? 'green' : 'gray'}-500 text-xs`}></i>
                       {batch.isActive ? 'Active' : 'Inactive'}
@@ -194,7 +237,9 @@ const BatchTable = ({ batches, onToggleStatus, onEdit }) => {
                         className={`w-10 h-5 rounded-full relative transition-colors shadow-inner ${
                           batch.isActive 
                             ? 'bg-gradient-to-r from-green-500 to-emerald-600' 
-                            : 'bg-gradient-to-r from-gray-300 to-gray-400'
+                            : isDarkMode
+                              ? 'bg-gradient-to-r from-gray-600 to-gray-700'
+                              : 'bg-gradient-to-r from-gray-300 to-gray-400'
                         }`}
                       >
                         <span
@@ -210,11 +255,17 @@ const BatchTable = ({ batches, onToggleStatus, onEdit }) => {
                 <td className="px-6 py-4">
                   <button
                     onClick={() => handleViewCourses(batch._id, batch.batchName)}
-                    className={`text-sm font-medium flex items-center px-3 py-1.5 rounded-lg transition-all duration-200 ${
-                      batch.isActive
-                        ? "text-blue-700 hover:text-blue-800 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-blue-200 hover:shadow-md transform hover:scale-105"
-                        : "text-gray-500 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200"
-                    }`}
+                    className={`
+                      text-sm font-medium flex items-center px-3 py-1.5 rounded-lg transition-all duration-200
+                      ${batch.isActive
+                        ? isDarkMode
+                          ? 'text-blue-300 bg-gradient-to-r from-blue-900/30 to-blue-800/30 hover:from-blue-900/50 hover:to-blue-800/50 border border-blue-800 hover:shadow-md transform hover:scale-105'
+                          : 'text-blue-700 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 border border-blue-200 hover:shadow-md transform hover:scale-105'
+                        : isDarkMode
+                          ? 'text-gray-500 bg-gradient-to-r from-gray-700 to-gray-600 border border-gray-600'
+                          : 'text-gray-500 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200'
+                      }
+                    `}
                   >
                     <i className="fas fa-graduation-cap mr-2"></i>
                     View Courses ({batch.courseCount || 0})
@@ -222,8 +273,12 @@ const BatchTable = ({ batches, onToggleStatus, onEdit }) => {
                 </td>
                 
                 <td className="px-6 py-4">
-                  <div className="text-sm text-gray-700 flex items-center">
-                    <i className="fas fa-calendar-alt text-gray-400 mr-2"></i>
+                  <div className={`text-sm flex items-center ${
+                    isDarkMode ? 'text-gray-300' : 'text-gray-700'
+                  }`}>
+                    <i className={`fas fa-calendar-alt mr-2 ${
+                      isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                    }`}></i>
                     {new Date(batch.createdAt).toLocaleDateString()}
                   </div>
                 </td>
@@ -232,12 +287,17 @@ const BatchTable = ({ batches, onToggleStatus, onEdit }) => {
                   <div className="flex items-center space-x-1.5">
                     <Button
                       onClick={() => onEdit(batch)}
-                      className="p-2 text-gray-500  mx-4 hover:text-blue-600 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 rounded-lg transition-all duration-200 transform hover:scale-105 border border-gray-200 hover:border-blue-200 shadow-sm"
+                      className={`
+                        p-2 rounded-lg transition-all duration-200 transform hover:scale-105 border shadow-sm
+                        ${isDarkMode 
+                          ? 'text-gray-300 hover:text-blue-300 bg-gray-700 hover:bg-gray-600 border-gray-600 hover:border-blue-700' 
+                          : 'text-gray-500 hover:text-blue-600 bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 border-gray-200 hover:border-blue-200'
+                        }
+                      `}
                       title="Edit Batch"
                     >
                       <i className="fas fa-edit"></i>
                     </Button>
-                   
                   </div>
                 </td>
               </tr>

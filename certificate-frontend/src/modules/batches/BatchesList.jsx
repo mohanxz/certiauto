@@ -1,3 +1,4 @@
+// src/modules/batches/BatchesList.jsx
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { batchAPI } from "../../api/batches";
@@ -10,12 +11,14 @@ import BatchForm from "./BatchForm";
 import BatchTable from "./BatchTable";
 import BatchCard from "./BatchCard";
 import { useToast } from "../../hooks/useToast";
+import { useTheme } from "../../context/ThemeContext";
 
 // Import PDF libraries
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 const BatchesList = () => {
+  const { isDarkMode } = useTheme();
   const [programs, setPrograms] = useState([]);
   const [batches, setBatches] = useState([]);
   const [courses, setCourses] = useState([]);
@@ -182,13 +185,13 @@ const BatchesList = () => {
 
       // Add header
       doc.setFontSize(20);
-      doc.setTextColor(40, 40, 40);
+      doc.setTextColor(isDarkMode ? 200 : 40, isDarkMode ? 200 : 40, isDarkMode ? 200 : 40);
       doc.setFont("helvetica", "bold");
       doc.text("BATCHES LIST", 14, 20);
 
       // Add subtitle
       doc.setFontSize(12);
-      doc.setTextColor(100, 100, 100);
+      doc.setTextColor(isDarkMode ? 150 : 100, isDarkMode ? 150 : 100, isDarkMode ? 150 : 100);
       doc.setFont("helvetica", "normal");
       if (selectedProgram) {
         doc.text(`Program: ${selectedProgram.programName}`, 14, 28);
@@ -273,7 +276,7 @@ const BatchesList = () => {
           fontStyle: "bold",
         },
         alternateRowStyles: {
-          fillColor: [245, 245, 245],
+          fillColor: isDarkMode ? [60, 60, 60] : [245, 245, 245],
         },
         columnStyles: {
           0: { cellWidth: 10 }, // #
@@ -294,10 +297,12 @@ const BatchesList = () => {
       const finalY = doc.lastAutoTable.finalY + 10;
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
+      doc.setTextColor(isDarkMode ? 200 : 40, isDarkMode ? 200 : 40, isDarkMode ? 200 : 40);
       doc.text("SUMMARY STATISTICS", 14, finalY);
 
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
+      doc.setTextColor(isDarkMode ? 150 : 100, isDarkMode ? 150 : 100, isDarkMode ? 150 : 100);
       doc.text(
         [
           `Total Batches: ${batches.length}`,
@@ -465,12 +470,12 @@ const BatchesList = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">
+          <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
             {selectedProgram
               ? `${selectedProgram.programName} Batches`
               : "Batches"}
           </h1>
-          <p className="text-gray-600">
+          <p className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
             {selectedProgram
               ? "Manage batches for this program"
               : "Manage all batches"}
@@ -478,13 +483,21 @@ const BatchesList = () => {
 
           {selectedProgram && (
             <div className="mt-2 flex items-center gap-2">
-              <span className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+              <span className={`text-sm px-3 py-1 rounded-full border ${
+                isDarkMode 
+                  ? 'text-blue-300 bg-blue-900/20 border-blue-800' 
+                  : 'text-blue-600 bg-blue-50 border-blue-200'
+              }`}>
                 <i className="fas fa-filter mr-1"></i>
                 Filtered by Program: {selectedProgram.programName}
               </span>
               <button
                 onClick={clearProgramFilter}
-                className="text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 px-2 py-1 rounded transition-colors"
+                className={`text-sm px-2 py-1 rounded transition-colors ${
+                  isDarkMode 
+                    ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-700' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
+                }`}
                 title="Show all batches"
               >
                 <i className="fas fa-times"></i>
@@ -496,13 +509,21 @@ const BatchesList = () => {
         <div className="flex items-center gap-3">
           {/* View Mode Toggle - only show if we have batches */}
           {batches.length > 0 && (
-            <div className="flex bg-white rounded-lg border border-gray-200 p-1 shadow-sm">
+            <div className={`flex rounded-lg border p-1 shadow-sm ${
+              isDarkMode 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'
+            }`}>
               <button
                 onClick={() => setViewMode("table")}
                 className={`p-2.5 rounded-md transition-all duration-300 flex items-center gap-2 ${
                   viewMode === "table"
-                    ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm"
-                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                    ? isDarkMode
+                      ? 'bg-gradient-to-r from-blue-900/30 to-indigo-900/30 text-blue-300 border border-blue-800 shadow-sm'
+                      : 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm'
+                    : isDarkMode
+                      ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                 }`}
               >
                 <i className="fas fa-table text-base"></i>
@@ -513,8 +534,12 @@ const BatchesList = () => {
                 onClick={() => setViewMode("card")}
                 className={`p-2.5 rounded-md transition-all duration-300 flex items-center gap-2 ${
                   viewMode === "card"
-                    ? "bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm"
-                    : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                    ? isDarkMode
+                      ? 'bg-gradient-to-r from-blue-900/30 to-indigo-900/30 text-blue-300 border border-blue-800 shadow-sm'
+                      : 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 border border-blue-200 shadow-sm'
+                    : isDarkMode
+                      ? 'text-gray-400 hover:bg-gray-700 hover:text-gray-300'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
                 }`}
               >
                 <i className="fas fa-th-large text-base"></i>
@@ -533,7 +558,10 @@ const BatchesList = () => {
               }
               size="medium"
               disabled={filteredBatches.length === 0 || isGeneratingPDF}
-              className="bg-gradient-to-r from-indigo-50 to-indigo-100 border-indigo-200 hover:from-indigo-100 hover:to-indigo-200 text-indigo-700 hover:text-indigo-800 hover:border-indigo-300"
+              className={isDarkMode
+                ? 'bg-gradient-to-r from-gray-700 to-gray-600 border-gray-600 hover:from-gray-600 hover:to-gray-500 text-gray-200 hover:text-white hover:border-gray-500'
+                : 'bg-gradient-to-r from-indigo-50 to-indigo-100 border-indigo-200 hover:from-indigo-100 hover:to-indigo-200 text-indigo-700 hover:text-indigo-800 hover:border-indigo-300'
+              }
             >
               {isGeneratingPDF ? "Generating..." : "Download PDF"}
             </Button>
@@ -559,72 +587,94 @@ const BatchesList = () => {
       </div>
 
       {/* Statistics Cards - only show if we have batches */}
-      {/* {batches.length > 0 && (
+      {batches.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-white to-blue-50 p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+          <div className={`p-5 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 ${
+            isDarkMode 
+              ? 'bg-gradient-to-br from-gray-800 to-gray-750 border-gray-700' 
+              : 'bg-gradient-to-br from-white to-blue-50 border-gray-200'
+          }`}>
             <div className="flex items-center">
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 shadow-sm">
                 <i className="fas fa-layer-group text-white text-xl"></i>
               </div>
               <div>
-                <p className="text-sm text-gray-600 font-medium">Total Batches</p>
-                <p className="text-2xl font-bold text-gray-800">
+                <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Total Batches</p>
+                <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                   {batches.length}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-white to-emerald-50 p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+          <div className={`p-5 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 ${
+            isDarkMode 
+              ? 'bg-gradient-to-br from-gray-800 to-gray-750 border-gray-700' 
+              : 'bg-gradient-to-br from-white to-emerald-50 border-gray-200'
+          }`}>
             <div className="flex items-center">
               <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center mr-4 shadow-sm">
                 <i className="fas fa-check-circle text-white text-xl"></i>
               </div>
               <div>
-                <p className="text-sm text-gray-600 font-medium">Active</p>
-                <p className="text-2xl font-bold text-gray-800">
+                <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Active</p>
+                <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                   {stats.activeBatches}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-white to-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+          <div className={`p-5 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 ${
+            isDarkMode 
+              ? 'bg-gradient-to-br from-gray-800 to-gray-750 border-gray-700' 
+              : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'
+          }`}>
             <div className="flex items-center">
               <div className="w-12 h-12 bg-gradient-to-r from-gray-500 to-gray-600 rounded-xl flex items-center justify-center mr-4 shadow-sm">
                 <i className="fas fa-pause-circle text-white text-xl"></i>
               </div>
               <div>
-                <p className="text-sm text-gray-600 font-medium">Inactive</p>
-                <p className="text-2xl font-bold text-gray-800">
+                <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Inactive</p>
+                <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                   {stats.inactiveBatches}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="bg-gradient-to-br from-white to-purple-50 p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-300">
+          <div className={`p-5 rounded-xl border shadow-sm hover:shadow-md transition-all duration-300 ${
+            isDarkMode 
+              ? 'bg-gradient-to-br from-gray-800 to-gray-750 border-gray-700' 
+              : 'bg-gradient-to-br from-white to-purple-50 border-gray-200'
+          }`}>
             <div className="flex items-center">
               <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-4 shadow-sm">
                 <i className="fas fa-graduation-cap text-white text-xl"></i>
               </div>
               <div>
-                <p className="text-sm text-gray-600 font-medium">Total Courses</p>
-                <p className="text-2xl font-bold text-gray-800">
+                <p className={`text-sm font-medium ${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>Total Courses</p>
+                <p className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
                   {stats.totalCourses}
                 </p>
               </div>
             </div>
           </div>
         </div>
-      )} */}
+      )}
 
       {/* Search and Filters */}
-      <div className="bg-gradient-to-br from-white to-gray-50 p-5 rounded-xl border border-gray-200 shadow-sm">
+      <div className={`p-5 rounded-xl border shadow-sm ${
+        isDarkMode 
+          ? 'bg-gradient-to-br from-gray-800 to-gray-750 border-gray-700' 
+          : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'
+      }`}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
               Search Batches
             </label>
             <div className="relative group">
@@ -633,15 +683,23 @@ const BatchesList = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search by name or code..."
-                className="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white/80 transition-all duration-300 hover:border-blue-400"
+                className={`
+                  block w-full rounded-xl border-2 px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300
+                  ${isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                    : 'bg-white/80 border-gray-300 text-gray-900 placeholder-gray-500'
+                  }
+                `}
               />
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <i className="fas fa-search text-gray-400"></i>
+                <i className={`fas fa-search ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
               </div>
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm("")}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                  className={`absolute inset-y-0 right-0 pr-4 flex items-center transition-colors ${
+                    isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'
+                  }`}
                 >
                   <i className="fas fa-times"></i>
                 </button>
@@ -651,14 +709,22 @@ const BatchesList = () => {
 
           {/* Course Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
               Course
             </label>
             <div className="relative">
               <select
                 value={courseFilter}
                 onChange={(e) => setCourseFilter(e.target.value)}
-                className="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white/80 transition-all duration-300 hover:border-blue-400"
+                className={`
+                  block w-full rounded-xl border-2 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300
+                  ${isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white/80 border-gray-300 text-gray-900'
+                  }
+                `}
               >
                 <option value="all">All Courses</option>
                 {courses.map((course) => (
@@ -668,35 +734,45 @@ const BatchesList = () => {
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <i className="fas fa-chevron-down text-gray-400"></i>
+                <i className={`fas fa-chevron-down ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
               </div>
             </div>
           </div>
 
           {/* Status Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
               Status
             </label>
             <div className="relative">
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white/80 transition-all duration-300 hover:border-blue-400"
+                className={`
+                  block w-full rounded-xl border-2 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300
+                  ${isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white/80 border-gray-300 text-gray-900'
+                  }
+                `}
               >
                 <option value="all">All Status</option>
                 <option value="active">Active Only</option>
                 <option value="inactive">Inactive Only</option>
               </select>
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <i className="fas fa-chevron-down text-gray-400"></i>
+                <i className={`fas fa-chevron-down ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
               </div>
             </div>
           </div>
 
           {/* Program Filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${
+              isDarkMode ? 'text-gray-300' : 'text-gray-700'
+            }`}>
               Program
             </label>
             <div className="relative">
@@ -713,7 +789,13 @@ const BatchesList = () => {
                     setSelectedProgram(program || null);
                   }
                 }}
-                className="block w-full rounded-xl border-2 border-gray-300 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white/80 transition-all duration-300 hover:border-blue-400"
+                className={`
+                  block w-full rounded-xl border-2 px-4 py-3 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300
+                  ${isDarkMode 
+                    ? 'bg-gray-700 border-gray-600 text-white' 
+                    : 'bg-white/80 border-gray-300 text-gray-900'
+                  }
+                `}
               >
                 <option value="all">All Programs</option>
                 {programs.map((program) => (
@@ -724,7 +806,7 @@ const BatchesList = () => {
               </select>
 
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <i className="fas fa-chevron-down text-gray-400"></i>
+                <i className={`fas fa-chevron-down ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
               </div>
             </div>
           </div>
@@ -732,30 +814,38 @@ const BatchesList = () => {
 
         {/* Active program filter notification */}
         {selectedProgram && (
-          <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200">
+          <div className={`mt-4 p-3 rounded-lg border ${
+            isDarkMode 
+              ? 'bg-gradient-to-r from-blue-900/20 to-indigo-900/20 border-blue-800' 
+              : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'
+          }`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                   <i className="fas fa-project-diagram text-white"></i>
                 </div>
                 <div>
-                  <p className="font-medium text-gray-800">
+                  <p className={`font-medium ${isDarkMode ? 'text-gray-200' : 'text-gray-800'}`}>
                     Showing batches for program:{" "}
-                    <span className="text-blue-600">
+                    <span className="text-blue-600 dark:text-blue-400">
                       {selectedProgram.programName}
                     </span>
                   </p>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                     Only batches from courses in this program are displayed
                   </p>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <p className={`text-sm mt-1 ${isDarkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                     Click "Download PDF" to export this filtered list
                   </p>
                 </div>
               </div>
               <button
                 onClick={clearProgramFilter}
-                className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-lg transition-colors"
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  isDarkMode 
+                    ? 'text-blue-300 hover:text-blue-200 hover:bg-blue-900/30' 
+                    : 'text-blue-600 hover:text-blue-800 hover:bg-blue-100'
+                }`}
               >
                 <i className="fas fa-times mr-1"></i>
                 Clear Program Filter
