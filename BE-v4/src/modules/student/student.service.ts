@@ -1,6 +1,7 @@
 import Student from "./student.model";
 import Batch from "../batch/batch.model";
 import { IStudent } from "./student.types";
+import mongoose from 'mongoose';
 
 /**
  * =====================================================
@@ -94,9 +95,9 @@ export const createStudent = async (
  * =====================================================
  */
 export const getAllStudents = async (query: any) => {
-  // Remove pagination - get all students
   const filter: any = {};
 
+  // Search filter
   if (query.search) {
     filter.$or = [
       { name: { $regex: query.search, $options: "i" } },
@@ -106,19 +107,41 @@ export const getAllStudents = async (query: any) => {
     ];
   }
 
-  if (query.courseId) filter.enrolledCourseIds = query.courseId;
-  if (query.batchId) filter.batchId = query.batchId;
+  // Batch filter
+  if (query.batchId) {
+    filter.batchId = query.batchId;
+  }
+
+  // COURSE FILTER FIX - This is the key part!
+  // Since enrolledCourseIds is an array, we need to use $in operator
+  if (query.courseId) {
+    // Handle both string and array cases
+    const courseIds = Array.isArray(query.courseId) 
+      ? query.courseId 
+      : [query.courseId];
+    
+    // Convert to ObjectId if they are valid MongoDB IDs
+    const objectIds = courseIds.map((id: string) => {
+      if (mongoose.Types.ObjectId.isValid(id)) {
+        return new mongoose.Types.ObjectId(id);
+      }
+      return id;
+    });
+    
+    // Use $in to check if any of the student's course IDs match
+    filter.enrolledCourseIds = { $in: objectIds };
+  }
+
+  console.log("MongoDB Query Filter:", JSON.stringify(filter, null, 2));
 
   const students = await Student.find(filter)
     .populate("enrolledCourseIds", "courseName courseCode")
     .populate("batchId", "batchName batchCode")
-    .sort({ createdAt: -1 }); // Removed skip and limit
+    .sort({ createdAt: -1 });
 
-  const total = await Student.countDocuments(filter);
-
-  // Return just the data array directly (no pagination object)
   return students;
 };
+
 /**
  * =====================================================
  * GET STUDENT BY ID
@@ -179,8 +202,40 @@ export const deleteStudent = async (id: string) => {
   return deleted;
 };
 
+/**
+ * =====================================================
+ * DELETE FILTERED STUDENTS
+ * =====================================================
+ */
 export const deleteFilteredStudents = async (filter: any) => {
-  // This will delete only students matching the filter criteria
-  const result = await Student.deleteMany(filter);
+  const mongoFilter: any = { ...filter };
+  
+  // Handle course filter if present (same logic as getAllStudents)
+  if (filter.courseId) {
+    const courseIds = Array.isArray(filter.courseId) 
+      ? filter.courseId 
+      : [filter.courseId];
+    
+    const objectIds = courseIds.map((id: string) => 
+      mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : id
+    );
+    
+    mongoFilter.enrolledCourseIds = { $in: objectIds };
+    delete mongoFilter.courseId; // Remove the original field
+  }
+  
+  // Handle search filter
+  if (filter.search) {
+    mongoFilter.$or = [
+      { name: { $regex: filter.search, $options: "i" } },
+      { email: { $regex: filter.search, $options: "i" } },
+      { phoneNumber: { $regex: filter.search, $options: "i" } },
+      { uniqueId: { $regex: filter.search, $options: "i" } },
+    ];
+    delete mongoFilter.search;
+  }
+  
+  console.log("Deleting students with filter:", mongoFilter);
+  const result = await Student.deleteMany(mongoFilter);
   return result;
 };

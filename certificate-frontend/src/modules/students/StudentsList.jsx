@@ -1,5 +1,4 @@
-// src/modules/students/StudentsList.jsx
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { studentAPI } from "../../api/students";
 import bulkUploadAPI from "../../api/bulkUpload";
@@ -15,6 +14,7 @@ import BulkUploadModal from "./BulkUploadModal";
 import StudentEmailModal from "./StudentEmailModal";
 import { useToast } from "../../hooks/useToast";
 import { useTheme } from "../../context/ThemeContext";
+import debounce from "lodash.debounce";
 
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -31,7 +31,12 @@ const StudentsList = () => {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [editingStudent, setEditingStudent] = useState(null);
   const [contactStudent, setContactStudent] = useState(null);
+  
+  // Use local state for immediate input
+  const [searchInput, setSearchInput] = useState("");
+  // Use debounced value for API calls
   const [searchTerm, setSearchTerm] = useState("");
+  
   const [batchFilter, setBatchFilter] = useState("all");
   const [courseFilter, setCourseFilter] = useState("all");
   const [viewMode, setViewMode] = useState("table");
@@ -49,6 +54,48 @@ const StudentsList = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const tableRef = useRef(null);
+
+  // Create debounced search function
+  const debouncedSetSearch = useCallback(
+    debounce((value) => {
+      setSearchTerm(value);
+    }, 500),
+    []
+  );
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchInput(value);
+    debouncedSetSearch(value);
+  };
+
+  // Clear search
+  const handleClearSearch = () => {
+    setSearchInput("");
+    setSearchTerm("");
+    debouncedSetSearch.cancel();
+  };
+
+  // Debug useEffect
+  useEffect(() => {
+    console.log("=== COMPONENT STATE ===");
+    console.log("Students:", students);
+    console.log("Batches:", batches);
+    console.log("Courses:", courses);
+    console.log("Filters:", {
+      searchTerm,
+      searchInput,
+      batchFilter,
+      courseFilter,
+      selectedBatch,
+      selectedCourse
+    });
+    
+    if (students.length > 0) {
+      console.log("Sample student courses:", students[0]?.enrolledCourseIds);
+    }
+  }, [students, batches, courses, searchTerm, searchInput, batchFilter, courseFilter, selectedBatch, selectedCourse]);
 
   useEffect(() => {
     const batchIdFromURL = searchParams.get("batchId");
@@ -121,11 +168,20 @@ const StudentsList = () => {
       if (batchFilter !== "all") params.batchId = batchFilter;
       if (courseFilter !== "all") params.courseId = courseFilter;
 
+      console.log("Fetching students with params:", params);
+
       const response = await studentAPI.getAllStudents(params);
+      console.log("API Response:", response);
+      
       if (response.success) {
         setStudents(response.data);
+        console.log("Students set:", response.data.length);
+      } else {
+        console.error("API returned success: false", response);
+        showToast(response.message || "Error fetching students", "error");
       }
     } catch (error) {
+      console.error("Error in fetchStudents:", error);
       showToast("Error fetching students", "error");
     } finally {
       setLoading(false);
@@ -482,7 +538,7 @@ const StudentsList = () => {
     setCourseFilter("all");
     setSelectedBatch(null);
     setSelectedCourse(null);
-    setSearchTerm("");
+    handleClearSearch();
 
     const newSearchParams = new URLSearchParams(searchParams);
     newSearchParams.delete("batchId");
@@ -509,7 +565,7 @@ const StudentsList = () => {
 
   const stats = getStats();
 
-  if (loading) {
+  if (loading && students.length === 0) {
     return <LoadingSkeleton type="table" count={5} />;
   }
 
@@ -804,7 +860,7 @@ const StudentsList = () => {
           : 'bg-gradient-to-br from-white to-gray-50 border-gray-200'
       }`}>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {/* Search */}
+          {/* Search - UPDATED to use searchInput instead of searchTerm */}
           <div>
             <label className={`block text-sm font-medium mb-2 ${
               isDarkMode ? 'text-gray-300' : 'text-gray-700'
@@ -814,8 +870,8 @@ const StudentsList = () => {
             <div className="relative group">
               <input
                 type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={searchInput}
+                onChange={handleSearchChange}
                 placeholder="Search by name, email, or ID..."
                 className={`
                   block w-full rounded-xl border-2 px-4 py-3 pl-12 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all duration-300
@@ -828,9 +884,9 @@ const StudentsList = () => {
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                 <i className={`fas fa-search ${isDarkMode ? 'text-gray-400' : 'text-gray-400'}`}></i>
               </div>
-              {searchTerm && (
+              {searchInput && (
                 <button
-                  onClick={() => setSearchTerm("")}
+                  onClick={handleClearSearch}
                   className={`absolute inset-y-0 right-0 pr-4 flex items-center transition-colors ${
                     isDarkMode ? 'text-gray-400 hover:text-gray-300' : 'text-gray-400 hover:text-gray-600'
                   }`}

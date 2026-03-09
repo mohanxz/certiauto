@@ -19,23 +19,28 @@ export const createStudent = async (req: Request, res: Response) => {
   }
 };
 
+/* ================= GET ALL STUDENTS ================= */
 export const getAllStudents = async (req: Request, res: Response) => {
   try {
+    console.log("Received query params:", req.query); // Debug log
+    
     const students = await studentService.getAllStudents(req.query);
     
-    // Send just the students array without pagination
+    console.log(`Found ${students.length} students`); // Debug log
+    
     sendResponse(
       res,
       200,
       true,
-      students, // Just the array directly
+      students,
       "Students fetched successfully"
-      // Removed the pagination parameter
     );
   } catch (error) {
+    console.error("Error in getAllStudents:", error);
     sendResponse(res, 500, false, null, (error as Error).message);
   }
 };
+
 /* ================= GET STUDENT BY ID ================= */
 export const getStudentById = async (req: Request, res: Response) => {
   try {
@@ -78,7 +83,6 @@ export const updateStudent = async (req: Request, res: Response) => {
   }
 };
 
-/* ================= SEND CERTIFICATE ================= */
 /* ================= SEND CERTIFICATE ================= */
 export const sendCertificate = async (req: Request, res: Response) => {
   try {
@@ -136,8 +140,6 @@ export const sendCertificate = async (req: Request, res: Response) => {
       prepareCertificateData(student, courseName, date)
     );
 
-    // FIX: Remove the senderEmailId argument (the 6th argument)
-    // Change this line (around line 143):
     const emailSent = await sendEmail(
       student.email, 
       finalSubject, 
@@ -148,7 +150,6 @@ export const sendCertificate = async (req: Request, res: Response) => {
         contentType: "application/pdf" 
       }],
       true // isHtml
-      // REMOVED: senderEmailId (this was the 6th argument causing the error)
     );
 
     await EmailLog.create({
@@ -253,30 +254,13 @@ export const deleteStudent = async (req: Request, res: Response) => {
     sendResponse(res, 500, false, null, (error as Error).message);
   }
 };
-// In student.controller.ts - Replace the deleteAllStudents function
 
 /* ================= DELETE FILTERED STUDENTS ================= */
 export const deleteFilteredStudents = async (req: Request, res: Response) => {
   try {
-    // Build filter from query parameters (same as getAllStudents)
-    const filter: any = {};
-
-    if (req.query.search) {
-      filter.$or = [
-        { name: { $regex: req.query.search, $options: "i" } },
-        { email: { $regex: req.query.search, $options: "i" } },
-        { phoneNumber: { $regex: req.query.search, $options: "i" } },
-        { uniqueId: { $regex: req.query.search, $options: "i" } },
-      ];
-    }
-
-    if (req.query.courseId) filter.enrolledCourseIds = req.query.courseId;
-    if (req.query.batchId) filter.batchId = req.query.batchId;
-
-    // Log what's being deleted (for debugging)
-    console.log("Deleting students with filter:", filter);
-
-    const result = await studentService.deleteFilteredStudents(filter);
+    console.log("Delete filtered students request:", req.query);
+    
+    const result = await studentService.deleteFilteredStudents(req.query);
     
     sendResponse(
       res, 
@@ -286,6 +270,7 @@ export const deleteFilteredStudents = async (req: Request, res: Response) => {
       `${result.deletedCount} student(s) deleted successfully`
     );
   } catch (error) {
+    console.error("Error in deleteFilteredStudents:", error);
     sendResponse(res, 500, false, null, (error as Error).message);
   }
 };

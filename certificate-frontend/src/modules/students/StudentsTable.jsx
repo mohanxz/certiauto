@@ -1,12 +1,9 @@
 // src/modules/students/StudentsTable.jsx
 import React, { useState } from "react";
-import { useStudentsWithEmailLogs } from "../../hooks/useStudentsWithEmailLogs";
-import { getStudentFailureReason } from "../../utils/emailStatusUtils";
 import EmailDetailsModal from "./EmailDetailsModal";
 import { useTheme } from "../../context/ThemeContext";
 
-const StudentsTable = ({ filters, onEdit, onDelete, onContact }) => {
-  const { students, loading, refresh } = useStudentsWithEmailLogs(filters);
+const StudentsTable = ({ students, onEdit, onDelete, onContact }) => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const { isDarkMode } = useTheme();
@@ -120,28 +117,33 @@ const StudentsTable = ({ filters, onEdit, onDelete, onContact }) => {
     );
   };
 
-  if (loading) {
+  // If no students, show empty state
+  if (students.length === 0) {
     return (
-      <div className={`flex flex-col items-center justify-center py-16 rounded-xl border ${
+      <div className={`flex flex-col items-center justify-center py-20 rounded-xl border ${
         isDarkMode 
           ? 'bg-gray-800 border-gray-700' 
           : 'bg-white border-gray-200'
       }`}>
-        <div className="relative">
-          <div className={`w-16 h-16 border-4 rounded-full ${
-            isDarkMode 
-              ? 'border-gray-700 border-t-blue-400' 
-              : 'border-gray-200 border-t-blue-500'
-          } animate-spin`}></div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <i className={`fas fa-users text-lg ${
-              isDarkMode ? 'text-gray-500' : 'text-gray-400'
-            }`}></i>
-          </div>
+        <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-4 ${
+          isDarkMode 
+            ? 'bg-gradient-to-br from-gray-700 to-gray-600' 
+            : 'bg-gradient-to-br from-gray-100 to-gray-200'
+        }`}>
+          <i className={`fas fa-users text-3xl ${
+            isDarkMode ? 'text-gray-500' : 'text-gray-400'
+          }`}></i>
         </div>
-        <p className={`mt-4 font-medium ${
-          isDarkMode ? 'text-gray-300' : 'text-gray-500'
-        }`}>Loading students...</p>
+        <h3 className={`text-lg font-semibold mb-2 ${
+          isDarkMode ? 'text-gray-200' : 'text-gray-700'
+        }`}>
+          No students found
+        </h3>
+        <p className={`text-sm mb-6 ${
+          isDarkMode ? 'text-gray-400' : 'text-gray-500'
+        }`}>
+          Try adjusting your filters or add a new student
+        </p>
       </div>
     );
   }
@@ -239,7 +241,7 @@ const StudentsTable = ({ filters, onEdit, onDelete, onContact }) => {
                     <div className="flex items-center gap-3">
                       <div className="relative">
                         <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white font-semibold text-sm shadow-md">
-                          {student.name.charAt(0).toUpperCase()}
+                          {student.name?.charAt(0).toUpperCase() || '?'}
                         </div>
                         <div
                           className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-2 ${
@@ -255,24 +257,28 @@ const StudentsTable = ({ filters, onEdit, onDelete, onContact }) => {
                         <div className={`font-semibold flex items-center gap-2 ${
                           isDarkMode ? 'text-gray-200' : 'text-gray-800'
                         }`}>
-                          {student.name}
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                            isDarkMode 
-                              ? 'bg-gray-700 text-gray-300' 
-                              : 'bg-gray-100 text-gray-600'
-                          }`}>
-                            {student.uniqueId}
-                          </span>
+                          {student.name || 'No Name'}
+                          {student.uniqueId && (
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                              isDarkMode 
+                                ? 'bg-gray-700 text-gray-300' 
+                                : 'bg-gray-100 text-gray-600'
+                            }`}>
+                              {student.uniqueId}
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-3 mt-1">
-                          <span className={`text-xs flex items-center gap-1 ${
-                            isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                          }`}>
-                            <i className={`fas fa-calendar-alt text-[10px] ${
-                              isDarkMode ? 'text-gray-500' : 'text-gray-400'
-                            }`}></i>
-                            {new Date(student.createdAt).toLocaleDateString()}
-                          </span>
+                          {student.createdAt && (
+                            <span className={`text-xs flex items-center gap-1 ${
+                              isDarkMode ? 'text-gray-400' : 'text-gray-500'
+                            }`}>
+                              <i className={`fas fa-calendar-alt text-[10px] ${
+                                isDarkMode ? 'text-gray-500' : 'text-gray-400'
+                              }`}></i>
+                              {new Date(student.createdAt).toLocaleDateString()}
+                            </span>
+                          )}
                           {student.enrolledCourseIds?.length > 0 && (
                             <span className={`text-xs flex items-center gap-1 ${
                               isDarkMode ? 'text-blue-300' : 'text-blue-600'
@@ -299,7 +305,7 @@ const StudentsTable = ({ filters, onEdit, onDelete, onContact }) => {
                           className="truncate max-w-[150px]"
                           title={student.email}
                         >
-                          {student.email}
+                          {student.email || 'N/A'}
                         </span>
                       </div>
                       <div className={`flex items-center gap-2 text-sm ${
@@ -468,33 +474,6 @@ const StudentsTable = ({ filters, onEdit, onDelete, onContact }) => {
             </tbody>
           </table>
         </div>
-
-        {/* Empty state */}
-        {students.length === 0 && (
-          <div className={`flex flex-col items-center justify-center py-20 ${
-            isDarkMode ? 'bg-gray-800' : 'bg-white'
-          }`}>
-            <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-4 ${
-              isDarkMode 
-                ? 'bg-gradient-to-br from-gray-700 to-gray-600' 
-                : 'bg-gradient-to-br from-gray-100 to-gray-200'
-            }`}>
-              <i className={`fas fa-users text-3xl ${
-                isDarkMode ? 'text-gray-500' : 'text-gray-400'
-              }`}></i>
-            </div>
-            <h3 className={`text-lg font-semibold mb-2 ${
-              isDarkMode ? 'text-gray-200' : 'text-gray-700'
-            }`}>
-              No students found
-            </h3>
-            <p className={`text-sm mb-6 ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              Try adjusting your filters or add a new student
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Email Details Modal */}
